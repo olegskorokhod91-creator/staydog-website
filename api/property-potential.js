@@ -1,4 +1,61 @@
 const NOTIFICATION_EMAIL = 'superfaststays@gmail.com'
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+
+const snapshotSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'score',
+    'sourceNote',
+    'managerSummary',
+    'conversationMessage',
+    'categories',
+    'topTakeaways',
+    'guestAppealNotes',
+    'revenueLevers',
+    'operationalWatchouts',
+    'missingOpportunities',
+    'recommendedImprovements',
+    'firstSuggestedSteps',
+    'stayDogFit',
+    'disclaimer',
+  ],
+  properties: {
+    score: { type: 'number' },
+    sourceNote: { type: 'string' },
+    managerSummary: { type: 'string' },
+    conversationMessage: { type: 'string' },
+    categories: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'guestAppeal',
+        'amenityStrength',
+        'listingQuality',
+        'photoQuality',
+        'operationalComplexity',
+        'revenueUpsideIndicators',
+      ],
+      properties: {
+        guestAppeal: { type: 'number' },
+        amenityStrength: { type: 'number' },
+        listingQuality: { type: 'number' },
+        photoQuality: { type: 'number' },
+        operationalComplexity: { type: 'number' },
+        revenueUpsideIndicators: { type: 'number' },
+      },
+    },
+    topTakeaways: { type: 'array', items: { type: 'string' } },
+    guestAppealNotes: { type: 'array', items: { type: 'string' } },
+    revenueLevers: { type: 'array', items: { type: 'string' } },
+    operationalWatchouts: { type: 'array', items: { type: 'string' } },
+    missingOpportunities: { type: 'array', items: { type: 'string' } },
+    recommendedImprovements: { type: 'array', items: { type: 'string' } },
+    firstSuggestedSteps: { type: 'array', items: { type: 'string' } },
+    stayDogFit: { type: 'string' },
+    disclaimer: { type: 'string' },
+  },
+}
 
 function clamp(value) {
   return Math.max(42, Math.min(94, Math.round(value)))
@@ -47,6 +104,25 @@ function includesAny(text, words) {
   return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0)
 }
 
+function cleanScore(value) {
+  return Math.max(0, Math.min(100, Math.round(Number(value) || 0)))
+}
+
+function normalizeSnapshot(result, fallback) {
+  const categories = {
+    ...fallback.categories,
+    ...(result.categories || {}),
+  }
+
+  return {
+    ...fallback,
+    ...result,
+    score: cleanScore(result.score || fallback.score),
+    categories: Object.fromEntries(Object.entries(categories).map(([key, value]) => [key, cleanScore(value)])),
+    disclaimer: result.disclaimer || fallback.disclaimer,
+  }
+}
+
 function analyze(payload, fetched = null) {
   const combined = `${payload.listingUrl || ''} ${payload.details || ''} ${fetched?.metadata?.title || ''} ${fetched?.metadata?.description || ''} ${fetched?.visibleText || ''}`.toLowerCase()
   const amenityHits = includesAny(combined, ['hot tub', 'pool', 'lake', 'beach', 'fire pit', 'game room', 'deck', 'grill', 'sauna', 'walkable'])
@@ -77,8 +153,29 @@ function analyze(payload, fetched = null) {
   return {
     score,
     sourceNote: fetched ? 'Generated from publicly accessible page text and submitted details.' : 'Generated from submitted details.',
+    managerSummary:
+      'This property has enough signal for a useful first-pass review. The strongest next move is to clarify the guest story, tighten the listing presentation, and review the operating plan before scaling bookings.',
+    conversationMessage:
+      'If I were reviewing this as a short-term rental operator, I would start by asking: what is the one reason a guest should choose this home over the next five listings nearby? The answer should show up in the first photos, the title, the amenities, and the pricing strategy.',
     disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories,
+    topTakeaways: [
+      'The property appears to have enough guest-facing appeal to justify a deeper StayDog review.',
+      'The listing story should make the strongest amenity and location advantages obvious in the first screen.',
+      'Operations need to be easy to repeat: access, cleaning, supplies, maintenance, and guest messaging all matter.',
+    ],
+    guestAppealNotes: [
+      'Lead with the most emotional guest moments: gathering spaces, outdoor amenities, views, walkability, or family convenience.',
+      'Make the first five photos feel like a complete reason to book, not just a tour of rooms.',
+    ],
+    revenueLevers: [
+      'Review minimum stays, weekend premiums, seasonal demand windows, and gap-night strategy.',
+      'Improve direct-booking positioning and platform copy so guests understand value quickly.',
+    ],
+    operationalWatchouts: [
+      'Confirm turnover complexity, supply cadence, smart lock reliability, and maintenance response expectations.',
+      'If premium amenities are offered, document inspection and reset standards clearly.',
+    ],
     missingOpportunities: [
       'Direct-booking savings and owner-grade management may need clearer positioning.',
       'The listing may benefit from a sharper first-screen amenity story.',
@@ -89,9 +186,78 @@ function analyze(payload, fetched = null) {
       'Clarify guest flow: parking, access, sleeping layout, pets, quiet hours, and nearby attractions.',
       'Review pricing strategy, minimum stays, turnover cadence, supplies, smart locks, and vendor coverage.',
     ],
+    firstSuggestedSteps: [
+      'Send StayDog the listing, current pain points, and any recent performance context.',
+      'Audit the first five photos and rewrite the opening copy around the strongest guest promise.',
+      'Review operations before pricing: cleaning, access, maintenance, guest messaging, and supplies.',
+    ],
     stayDogFit:
       'StayDog may be a good fit if the owner wants hospitality-first guest care, dynamic pricing review, maintenance coordination, and a more hands-off operating model.',
   }
+}
+
+function extractResponseText(response) {
+  if (response.output_text) return response.output_text
+  const output = response.output || []
+  for (const item of output) {
+    for (const content of item.content || []) {
+      if (content.text) return content.text
+    }
+  }
+  return ''
+}
+
+async function createOpenAISnapshot(payload, fetched, fallback) {
+  if (!process.env.OPENAI_API_KEY) return fallback
+
+  const listingContext = [
+    payload.listingUrl ? `Listing URL: ${payload.listingUrl}` : '',
+    payload.details ? `Owner details: ${payload.details}` : '',
+    fetched?.metadata?.title ? `Page title: ${fetched.metadata.title}` : '',
+    fetched?.metadata?.description ? `Page description: ${fetched.metadata.description}` : '',
+    fetched?.visibleText ? `Visible listing text: ${fetched.visibleText.slice(0, 9000)}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      temperature: 0.55,
+      input: [
+        {
+          role: 'system',
+          content:
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema.',
+        },
+        {
+          role: 'user',
+          content: `Create a StayDog Property Potential Snapshot for this owner submission. Make it feel like an experienced STR operator is talking to the owner, not a generic report. Keep bullets concise and actionable.\n\n${listingContext || 'No listing context provided.'}`,
+        },
+      ],
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'staydog_property_potential_snapshot',
+          strict: true,
+          schema: snapshotSchema,
+        },
+      },
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`OpenAI snapshot failed with status ${response.status}`)
+  }
+
+  const body = await response.json()
+  const text = extractResponseText(body)
+  return normalizeSnapshot(JSON.parse(text), fallback)
 }
 
 async function notifyLead(payload, result) {
@@ -136,14 +302,22 @@ export default async function handler(req, res) {
       }
     }
 
-    const result = analyze(payload, fetched)
+    const fallback = analyze(payload, fetched)
+    let result = fallback
+
+    try {
+      result = await createOpenAISnapshot(payload, fetched, fallback)
+    } catch (error) {
+      result = fallback
+    }
+
     const storage = await notifyLead(payload, result)
 
     res.status(200).json({
       status: storage.stored ? 'submitted' : 'staged',
       message: storage.stored
-        ? 'Snapshot generated and sent for Google Sheets/email notification.'
-        : 'Snapshot generated. Connect STAYDOG_LEAD_ENDPOINT to send this to Google Sheets and email.',
+        ? 'Your StayDog snapshot is ready, and the details were sent for follow-up.'
+        : 'Your StayDog snapshot is ready. Add contact automation later to send results to Google Sheets and email.',
       result,
     })
   } catch (error) {

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import AskStayDogAI from './components/AskStayDogAI'
 import Footer from './components/Footer'
 import HeroSection from './components/HeroSection'
 import HomesProofSection from './components/HomesProofSection'
@@ -87,7 +86,6 @@ export default function App() {
         <HomePage navigate={navigate} />
       )}
       <Footer navigate={navigate} />
-      <AskStayDogAI navigate={navigate} page={isPartnerPage || isScorePage ? 'partner' : 'default'} />
     </div>
   )
 }

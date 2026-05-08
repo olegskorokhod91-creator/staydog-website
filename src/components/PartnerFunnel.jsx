@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, Mail, Phone, ShieldCheck } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { funnelQuestions, proofStats } from '../data/content'
 import { submitPartnerLead } from '../services/leadService'
@@ -118,6 +118,17 @@ export default function PartnerFunnel({ navigate }) {
               <strong>Owner intake, simplified.</strong>
               <p>Tell us the essentials. StayDog follows up with a human review before terms or projections are discussed.</p>
             </div>
+            <div className="funnel-direct-contact">
+              <small>Prefer to talk?</small>
+              <a href="tel:+12483828370">
+                <Phone aria-hidden="true" />
+                248-382-8370
+              </a>
+              <a href="mailto:superfaststays@gmail.com">
+                <Mail aria-hidden="true" />
+                superfaststays@gmail.com
+              </a>
+            </div>
             <div className="funnel-proof-grid">
               {proofStats.map((stat) => (
                 <span key={stat.label}>
@@ -143,6 +154,18 @@ export default function PartnerFunnel({ navigate }) {
                 </div>
                 <h2>{question.label}</h2>
                 <QuestionField question={question} value={value} onChange={updateValue} />
+
+                <div className="funnel-inline-contact">
+                  <span>Rather talk to StayDog directly?</span>
+                  <a href="tel:+12483828370">
+                    <Phone aria-hidden="true" />
+                    248-382-8370
+                  </a>
+                  <a href="mailto:superfaststays@gmail.com">
+                    <Mail aria-hidden="true" />
+                    Email StayDog
+                  </a>
+                </div>
 
                 {answersPreview.length > 0 && (
                   <div className="answer-preview" aria-label="Recent answers">

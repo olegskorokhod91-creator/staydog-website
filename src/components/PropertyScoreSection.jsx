@@ -1,4 +1,4 @@
-import { BarChart3, Link2, Sparkles } from 'lucide-react'
+import { BarChart3, Camera, ClipboardList, Link2, Sparkles, WandSparkles } from 'lucide-react'
 import CtaButton from './CtaButton'
 
 export default function PropertyScoreSection({ navigate }) {
@@ -29,12 +29,27 @@ export default function PropertyScoreSection({ navigate }) {
           <article>
             <BarChart3 aria-hidden="true" />
             <strong>Potential Score</strong>
-            <span>Out of 100</span>
+            <span>A fast read on guest appeal, amenities, listing quality, and operational complexity.</span>
           </article>
           <article>
             <Link2 aria-hidden="true" />
-            <strong>URL or manual details</strong>
-            <span>Airbnb, Vrbo, Booking.com, Zillow, or direct booking</span>
+            <strong>Full listing analysis</strong>
+            <span>Paste Airbnb, VRBO, Booking.com, Zillow, Expedia, or direct-booking details.</span>
+          </article>
+          <article>
+            <Camera aria-hidden="true" />
+            <strong>Photo and amenity review</strong>
+            <span>See which first-screen moments, amenities, and guest hooks could work harder.</span>
+          </article>
+          <article>
+            <ClipboardList aria-hidden="true" />
+            <strong>First suggested steps</strong>
+            <span>Get practical next moves before a StayDog strategy call.</span>
+          </article>
+          <article className="score-teaser-card-feature">
+            <WandSparkles aria-hidden="true" />
+            <strong>Built for owners deciding what to do next</strong>
+            <span>Useful whether your home is already listed or still being prepared for launch.</span>
           </article>
         </div>
       </div>

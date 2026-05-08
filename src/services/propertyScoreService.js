@@ -36,6 +36,10 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
   return {
     score,
     sourceNote,
+    managerSummary:
+      'This property has enough signal for a useful first-pass review. The strongest next move is to clarify the guest story, tighten the listing presentation, and review the operating plan before scaling bookings.',
+    conversationMessage:
+      'If I were reviewing this as a short-term rental operator, I would start by asking: what is the one reason a guest should choose this home over the next five listings nearby?',
     disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories: {
       guestAppeal,
@@ -45,6 +49,23 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
       operationalComplexity,
       revenueUpsideIndicators,
     },
+    topTakeaways: [
+      'The property appears to have enough guest-facing appeal to justify a deeper StayDog review.',
+      'The listing story should make the strongest amenity and location advantages obvious in the first screen.',
+      'Operations need to be easy to repeat: access, cleaning, supplies, maintenance, and guest messaging all matter.',
+    ],
+    guestAppealNotes: [
+      'Lead with the most emotional guest moments: gathering spaces, outdoor amenities, views, walkability, or family convenience.',
+      'Make the first five photos feel like a complete reason to book, not just a tour of rooms.',
+    ],
+    revenueLevers: [
+      'Review minimum stays, weekend premiums, seasonal demand windows, and gap-night strategy.',
+      'Improve direct-booking positioning and platform copy so guests understand value quickly.',
+    ],
+    operationalWatchouts: [
+      'Confirm turnover complexity, supply cadence, smart lock reliability, and maintenance response expectations.',
+      'If premium amenities are offered, document inspection and reset standards clearly.',
+    ],
     missingOpportunities: [
       'Sharper direct-booking positioning could improve perceived value.',
       'A clearer amenity story may help guests understand why the property is worth choosing.',
@@ -54,6 +75,11 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
       'Lead with the strongest lifestyle moments in the first five photos.',
       'Clarify sleeping layout, parking, pet rules, and premium amenities in the listing copy.',
       'Review pricing, minimum stays, cleaning cadence, supplies, and smart-lock flow before launch.',
+    ],
+    firstSuggestedSteps: [
+      'Send StayDog the listing, current pain points, and any recent performance context.',
+      'Audit the first five photos and rewrite the opening copy around the strongest guest promise.',
+      'Review operations before pricing: cleaning, access, maintenance, guest messaging, and supplies.',
     ],
     stayDogFit: 'StayDog may be a good fit if you want hospitality-first guest care, cleaner owner visibility, dynamic pricing review, and a more hands-off operating model.',
   }
@@ -90,7 +116,7 @@ export async function submitPropertyScore(payload) {
 
     return {
       status: 'staged',
-      message: 'Snapshot staged locally. Connect VITE_STAYDOG_SCORE_ENDPOINT or the /api/property-potential route to send this to Google Sheets and email.',
+      message: 'Your StayDog snapshot is ready. Add contact automation later to send results to Google Sheets and email.',
       result,
     }
   }

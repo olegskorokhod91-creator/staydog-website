@@ -1,6 +1,5 @@
 import { BarChart3, CalendarCheck, Home, Mail, Menu, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { bookingUrl } from '../data/content'
 import { useAssetStatus } from '../hooks/useAssetStatus'
 
 const logoCandidates = [
@@ -75,10 +74,10 @@ export default function Navigation({ navigate }) {
           <BarChart3 aria-hidden="true" size={16} />
           Property Score
         </button>
-        <a href={bookingUrl} target="_blank" rel="noreferrer">
+        <button type="button" onClick={() => localNav('/', '#homes')}>
           <CalendarCheck aria-hidden="true" size={16} />
           Explore Homes
-        </a>
+        </button>
         <button type="button" onClick={() => localNav('/', '#signature')}>
           Signature Collection
         </button>

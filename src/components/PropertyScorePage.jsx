@@ -1,4 +1,18 @@
-import { ArrowLeft, BarChart3, CheckCircle2, ExternalLink, Link2, Loader2, PencilLine, ShieldCheck } from 'lucide-react'
+import {
+  ArrowLeft,
+  BarChart3,
+  Camera,
+  CheckCircle2,
+  ClipboardList,
+  ExternalLink,
+  Home,
+  Link2,
+  Loader2,
+  PencilLine,
+  ShieldCheck,
+  TrendingUp,
+  Wrench,
+} from 'lucide-react'
 import { useState } from 'react'
 import { submitPropertyScore } from '../services/propertyScoreService'
 import CtaButton from './CtaButton'
@@ -30,6 +44,16 @@ function ScoreMeter({ label, value }) {
       </div>
       <i style={{ width: `${value}%` }} />
     </div>
+  )
+}
+
+function InsightCard({ icon: Icon, title, items }) {
+  return (
+    <article className="score-insight-card">
+      <Icon aria-hidden="true" />
+      <h3>{title}</h3>
+      <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul>
+    </article>
   )
 }
 
@@ -173,17 +197,38 @@ export default function PropertyScorePage({ navigate }) {
                   <small>out of 100</small>
                 </div>
 
+                <div className="score-manager-note">
+                  <span>Operator read</span>
+                  <p>{result.managerSummary}</p>
+                </div>
+
                 <div className="score-meter-grid">
                   {Object.entries(result.categories).map(([key, value]) => (
                     <ScoreMeter key={key} label={labels[key]} value={value} />
                   ))}
                 </div>
 
+                <div className="score-takeaways">
+                  <h3>What I would look at first</h3>
+                  <ul>{(result.topTakeaways || []).map((item) => <li key={item}>{item}</li>)}</ul>
+                </div>
+
+                <div className="score-insight-grid">
+                  <InsightCard icon={Home} title="Guest Appeal" items={result.guestAppealNotes || []} />
+                  <InsightCard icon={TrendingUp} title="Revenue Levers" items={result.revenueLevers || []} />
+                  <InsightCard icon={Wrench} title="Operational Watchouts" items={result.operationalWatchouts || []} />
+                  <InsightCard icon={Camera} title="Missing Opportunities" items={result.missingOpportunities || []} />
+                </div>
+
+                <div className="score-steps">
+                  <ClipboardList aria-hidden="true" />
+                  <div>
+                    <h3>First suggested steps</h3>
+                    <ol>{(result.firstSuggestedSteps || []).map((item) => <li key={item}>{item}</li>)}</ol>
+                  </div>
+                </div>
+
                 <div className="score-notes">
-                  <article>
-                    <h3>Missing Opportunities</h3>
-                    <ul>{result.missingOpportunities.map((item) => <li key={item}>{item}</li>)}</ul>
-                  </article>
                   <article>
                     <h3>Recommended Improvements</h3>
                     <ul>{result.recommendedImprovements.map((item) => <li key={item}>{item}</li>)}</ul>
@@ -191,6 +236,10 @@ export default function PropertyScorePage({ navigate }) {
                   <article>
                     <h3>Why StayDog may be a good fit</h3>
                     <p>{result.stayDogFit}</p>
+                  </article>
+                  <article>
+                    <h3>Manager note</h3>
+                    <p>{result.conversationMessage}</p>
                   </article>
                 </div>
 

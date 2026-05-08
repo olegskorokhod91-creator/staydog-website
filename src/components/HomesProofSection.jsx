@@ -1,4 +1,3 @@
-import { ExternalLink } from 'lucide-react'
 import { bookingUrl, proofStats, propertyImages } from '../data/content'
 import CtaButton from './CtaButton'
 
@@ -46,9 +45,6 @@ export default function HomesProofSection() {
           <CtaButton href={bookingUrl} icon="external">
             Explore Homes
           </CtaButton>
-          <a href={bookingUrl} target="_blank" rel="noreferrer" className="direct-booking-note">
-            Direct booking advantage <ExternalLink aria-hidden="true" size={15} />
-          </a>
         </div>
       </div>
     </section>

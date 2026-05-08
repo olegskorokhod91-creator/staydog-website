@@ -1452,8 +1452,9 @@ p {
 .score-teaser-card {
   position: relative;
   display: grid;
-  min-height: 420px;
-  align-content: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-height: 460px;
+  align-content: center;
   gap: 0.85rem;
   overflow: hidden;
   border: 1px solid rgba(7, 19, 34, 0.12);
@@ -1483,12 +1484,21 @@ p {
 }
 
 .score-teaser-card strong {
-  font-size: 1.25rem;
+  font-size: clamp(1.02rem, 1.7vw, 1.26rem);
+  line-height: 1.05;
 }
 
 .score-teaser-card span {
   color: #aac3d8;
   font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.score-teaser-card-feature {
+  grid-column: 1 / -1;
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.16), rgba(216, 173, 104, 0.12)),
+    rgba(6, 17, 31, 0.76) !important;
 }
 
 .score-radar {
@@ -1805,6 +1815,49 @@ p {
   font-size: 0.94rem;
 }
 
+.funnel-direct-contact,
+.funnel-inline-contact {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid rgba(158, 231, 255, 0.16);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.12), rgba(216, 173, 104, 0.08)),
+    rgba(6, 17, 31, 0.42);
+  padding: 0.9rem;
+}
+
+.funnel-direct-contact a,
+.funnel-inline-contact a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #f6fbff;
+  font-size: 0.9rem;
+  font-weight: 820;
+}
+
+.funnel-direct-contact svg,
+.funnel-inline-contact svg {
+  width: 16px;
+  height: 16px;
+  color: var(--glowblue);
+}
+
+.funnel-inline-contact {
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.funnel-inline-contact span {
+  color: #c4d7e8;
+  font-size: 0.88rem;
+}
+
 .funnel-proof-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1904,8 +1957,7 @@ p {
 }
 
 .funnel-panel input,
-.funnel-panel textarea,
-.chat-form input {
+.funnel-panel textarea {
   width: 100%;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius);
@@ -1924,8 +1976,7 @@ p {
 }
 
 .funnel-panel input:focus,
-.funnel-panel textarea:focus,
-.chat-form input:focus {
+.funnel-panel textarea:focus {
   border-color: rgba(88, 199, 255, 0.72);
   box-shadow: 0 0 0 4px rgba(88, 199, 255, 0.13);
   background: rgba(255, 255, 255, 0.12);
@@ -2158,11 +2209,14 @@ p {
 .score-result {
   display: grid;
   gap: 1rem;
+  animation: resultReveal 560ms ease both;
 }
 
 .score-total {
+  position: relative;
   display: grid;
   justify-items: center;
+  overflow: hidden;
   border: 1px solid rgba(158, 231, 255, 0.16);
   border-radius: var(--radius);
   background:
@@ -2171,8 +2225,19 @@ p {
   padding: 1.2rem;
 }
 
+.score-total::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: conic-gradient(from 180deg, transparent, rgba(88, 199, 255, 0.18), rgba(216, 173, 104, 0.16), transparent);
+  opacity: 0.55;
+  animation: radarSpin 9s linear infinite;
+}
+
 .score-total span,
 .score-total small {
+  position: relative;
+  z-index: 1;
   color: var(--glowblue);
   font-size: 0.74rem;
   font-weight: 900;
@@ -2181,9 +2246,38 @@ p {
 }
 
 .score-total strong {
+  position: relative;
+  z-index: 1;
   color: #fff;
   font-size: clamp(4rem, 10vw, 7rem);
   line-height: 0.9;
+}
+
+.score-manager-note,
+.score-takeaways,
+.score-steps {
+  border: 1px solid rgba(158, 231, 255, 0.14);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.09), rgba(216, 173, 104, 0.06)),
+    rgba(255, 255, 255, 0.055);
+  padding: 1rem;
+}
+
+.score-manager-note span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--glowblue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.score-manager-note p,
+.score-takeaways li,
+.score-steps li {
+  color: #d8e8f8;
 }
 
 .score-meter-grid {
@@ -2194,6 +2288,7 @@ p {
 .score-meter {
   display: grid;
   gap: 0.45rem;
+  animation: resultReveal 620ms ease both;
 }
 
 .score-meter div {
@@ -2214,18 +2309,78 @@ p {
   border-radius: 999px;
   background: linear-gradient(90deg, #58c7ff, #d8ad68);
   box-shadow: 0 0 22px rgba(88, 199, 255, 0.24);
+  transform-origin: left;
+  animation: meterGrow 840ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.score-notes {
+.score-takeaways,
+.score-steps {
   display: grid;
   gap: 0.75rem;
 }
 
+.score-takeaways h3,
+.score-steps h3 {
+  color: #fff;
+}
+
+.score-takeaways ul,
+.score-steps ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.score-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.score-insight-card,
 .score-notes article {
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.055);
   padding: 0.9rem;
+}
+
+.score-insight-card {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.score-insight-card svg,
+.score-steps > svg {
+  color: var(--glowblue);
+}
+
+.score-insight-card h3 {
+  color: #fff;
+}
+
+.score-insight-card ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #c7d8e6;
+}
+
+.score-steps {
+  grid-template-columns: auto 1fr;
+}
+
+.score-steps > svg {
+  width: 28px;
+  height: 28px;
+}
+
+.score-notes {
+  display: grid;
+  gap: 0.75rem;
 }
 
 .score-notes h3 {
@@ -2239,6 +2394,38 @@ p {
   margin: 0;
   padding-left: 1.1rem;
   color: #c7d8e6;
+}
+
+.score-notes p {
+  color: #c7d8e6;
+}
+
+@keyframes resultReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes meterGrow {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes radarSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .footer {
@@ -2273,6 +2460,23 @@ p {
   display: grid;
   justify-items: start;
   gap: 0.38rem;
+}
+
+.footer-contact {
+  border: 1px solid rgba(158, 231, 255, 0.13);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.1), rgba(216, 173, 104, 0.08)),
+    rgba(255, 255, 255, 0.035);
+  padding: 1rem;
+}
+
+.footer-contact > span {
+  color: var(--glowblue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
 }
 
 .footer-links a,
@@ -2317,185 +2521,6 @@ p {
   color: #a9bdd0;
   font-size: 0.88rem;
   line-height: 1.55;
-}
-
-.ask-staydog-ai {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 60;
-  display: grid;
-  justify-items: end;
-  gap: 0.75rem;
-}
-
-.ask-staydog-ai.is-partner {
-  right: 18px;
-  left: auto;
-  justify-items: end;
-}
-
-.ask-staydog-ai.is-partner .chat-launcher span {
-  display: none;
-}
-
-.chat-launcher {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 52px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(135deg, rgba(88, 199, 255, 0.9), rgba(216, 173, 104, 0.88)),
-    #58c7ff;
-  color: #06111f;
-  font-weight: 900;
-  padding: 0.78rem 1rem;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-}
-
-.chat-launcher i {
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
-  border: 2px solid #06111f;
-  border-radius: 999px;
-  background: #fff;
-  color: #06111f;
-  font-size: 0.72rem;
-  font-style: normal;
-}
-
-.chat-panel {
-  width: min(390px, calc(100vw - 36px));
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04)),
-    rgba(6, 17, 31, 0.9);
-  box-shadow: 0 28px 110px rgba(0, 0, 0, 0.36);
-  backdrop-filter: blur(24px);
-}
-
-.chat-panel header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.85rem;
-}
-
-.chat-panel header > div {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-
-.chat-avatar {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: var(--radius);
-  background: rgba(88, 199, 255, 0.13);
-  color: var(--glowblue);
-}
-
-.chat-panel strong {
-  display: block;
-  color: #fff;
-  line-height: 1;
-}
-
-.chat-panel small {
-  color: #9fb8cc;
-  font-size: 0.74rem;
-}
-
-.chat-panel header button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-}
-
-.chat-messages {
-  display: grid;
-  max-height: 410px;
-  gap: 0.75rem;
-  overflow-y: auto;
-  padding: 0.85rem;
-}
-
-.chat-message {
-  display: grid;
-  justify-items: start;
-  gap: 0.55rem;
-}
-
-.chat-message.user {
-  justify-items: end;
-}
-
-.chat-message p {
-  max-width: 92%;
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.08);
-  color: #eaf7ff;
-  font-size: 0.9rem;
-  line-height: 1.55;
-  padding: 0.75rem;
-}
-
-.chat-message.user p {
-  background: rgba(88, 199, 255, 0.18);
-}
-
-.chat-message a,
-.chat-message button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid rgba(216, 173, 104, 0.3);
-  border-radius: var(--radius);
-  background: rgba(216, 173, 104, 0.12);
-  color: #ffe4b3;
-  font-size: 0.78rem;
-  font-weight: 860;
-  padding: 0.52rem 0.62rem;
-}
-
-.chat-form {
-  display: grid;
-  grid-template-columns: 1fr 46px;
-  gap: 0.55rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0.75rem;
-}
-
-.chat-form input {
-  min-height: 46px;
-  padding: 0.8rem;
-}
-
-.chat-form button {
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: var(--radius);
-  background: linear-gradient(135deg, #58c7ff, #d8ad68);
-  color: #06111f;
 }
 
 @media (max-width: 1080px) {
@@ -2678,10 +2703,21 @@ p {
 
   .service-grid,
   .hub-panel-grid,
+  .score-teaser-card,
+  .score-insight-grid,
   .signal-lanes,
   .mode-toggle,
   .choice-grid {
     grid-template-columns: 1fr;
+  }
+
+  .score-teaser-card-feature {
+    grid-column: auto;
+  }
+
+  .funnel-inline-contact {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .homes-header {
@@ -2917,21 +2953,11 @@ p {
     min-height: auto;
   }
 
+  .score-steps {
+    grid-template-columns: 1fr;
+  }
+
   .funnel-brand-panel {
-    display: none;
-  }
-
-  .ask-staydog-ai {
-    right: 12px;
-    bottom: 12px;
-  }
-
-  .chat-launcher {
-    min-height: 48px;
-    padding: 0.68rem;
-  }
-
-  .chat-launcher span {
     display: none;
   }
 

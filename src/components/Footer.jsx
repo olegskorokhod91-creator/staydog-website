@@ -1,5 +1,5 @@
 import { Mail, Phone } from 'lucide-react'
-import { bookingUrl, proofStats } from '../data/content'
+import { proofStats } from '../data/content'
 
 export default function Footer({ navigate }) {
   return (
@@ -15,13 +15,14 @@ export default function Footer({ navigate }) {
 
         <div className="footer-links" data-reveal>
           <button type="button" onClick={() => navigate('/', '#owners')}>For Owners</button>
-          <a href={bookingUrl} target="_blank" rel="noreferrer">Explore Homes</a>
+          <button type="button" onClick={() => navigate('/', '#homes')}>Explore Homes</button>
           <button type="button" onClick={() => navigate('/', '#signature')}>Signature Collection</button>
           <button type="button" onClick={() => navigate('/property-potential-score')}>Property Score</button>
           <button type="button" onClick={() => navigate('/partner-with-us')}>Partner With Us</button>
         </div>
 
         <div className="footer-contact" data-reveal>
+          <span>Contact StayDog</span>
           <a href="mailto:superfaststays@gmail.com">
             <Mail aria-hidden="true" />
             superfaststays@gmail.com

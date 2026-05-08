@@ -73,6 +73,8 @@ The partner funnel and Property Potential Score are integration-ready. Set these
 VITE_STAYDOG_LEAD_ENDPOINT=https://your-secure-lead-endpoint.example.com
 VITE_STAYDOG_SCORE_ENDPOINT=/api/property-potential
 STAYDOG_LEAD_ENDPOINT=https://your-secure-lead-endpoint.example.com
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
 ```
 
 The lead endpoint should:
@@ -81,6 +83,6 @@ The lead endpoint should:
 2. send an email notification to `superfaststays@gmail.com`
 3. return a successful HTTP response
 
-The `/api/property-potential` serverless route attempts to fetch publicly available listing metadata/text, creates a careful Property Potential Snapshot, and forwards the submitted URL/details, result, name, email, and phone to `STAYDOG_LEAD_ENDPOINT` when connected.
+The `/api/property-potential` serverless route attempts to fetch publicly available listing metadata/text, asks OpenAI for a seasoned short-term rental manager style Property Potential Snapshot when `OPENAI_API_KEY` is configured, and forwards the submitted URL/details, result, name, email, and phone to `STAYDOG_LEAD_ENDPOINT` when connected. If OpenAI is not configured or a listing blocks access, the site gracefully falls back to a local snapshot/manual details flow.
 
 Until endpoints are connected, the frontend safely stores the latest partner lead or score submission locally and labels it as staged.
