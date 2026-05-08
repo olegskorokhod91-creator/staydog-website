@@ -25,6 +25,7 @@ function useFirstAvailableAsset(urls) {
 
 export default function Navigation({ navigate }) {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const logoUrl = useFirstAvailableAsset(logoCandidates)
 
   useEffect(() => {
@@ -32,13 +33,20 @@ export default function Navigation({ navigate }) {
     return () => document.body.classList.remove('nav-open')
   }, [open])
 
+  useEffect(() => {
+    const updateScrolled = () => setScrolled(window.scrollY > 90)
+    updateScrolled()
+    window.addEventListener('scroll', updateScrolled, { passive: true })
+    return () => window.removeEventListener('scroll', updateScrolled)
+  }, [])
+
   const localNav = (path, hash) => {
     setOpen(false)
     navigate(path, hash)
   }
 
   return (
-    <header className="site-nav" aria-label="Primary navigation">
+    <header className={`site-nav ${scrolled ? 'is-scrolled' : ''} ${open ? 'is-open' : ''}`} aria-label="Primary navigation">
       <a className="brand-lockup" href="/" onClick={(event) => {
         event.preventDefault()
         localNav('/')

@@ -13,8 +13,8 @@ export default function OperationsSection() {
             refined end-to-end operation without becoming the operations team.
           </p>
           <div className="market-note">
-            Serving Michigan and Indiana markets today, with selective expansion opportunities where the hospitality
-            standard can stay high.
+            Serving Michigan, Indiana, and Illinois markets today, with selective expansion opportunities where the
+            hospitality standard can stay high.
           </div>
         </div>
 

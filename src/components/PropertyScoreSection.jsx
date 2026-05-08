@@ -12,8 +12,8 @@ export default function PropertyScoreSection({ navigate }) {
           </div>
           <h2>Get a careful snapshot of your vacation rental opportunity.</h2>
           <p>
-            Paste a listing URL or add property details manually. StayDog will return a non-guaranteed potential score,
-            opportunity notes, and recommended next steps before a human strategy review.
+            Paste a listing URL or add property details manually. StayDog will return a potential score, opportunity
+            notes, and recommended next steps before a human strategy review.
           </p>
           <CtaButton onClick={() => navigate('/property-potential-score')} icon="arrow">
             Get Property Score

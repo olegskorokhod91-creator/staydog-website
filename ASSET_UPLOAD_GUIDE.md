@@ -81,6 +81,6 @@ The lead endpoint should:
 2. send an email notification to `superfaststays@gmail.com`
 3. return a successful HTTP response
 
-The `/api/property-potential` serverless route attempts to fetch publicly available listing metadata/text, creates a careful non-guaranteed Property Potential Snapshot, and forwards the submitted URL/details, result, name, email, and phone to `STAYDOG_LEAD_ENDPOINT` when connected.
+The `/api/property-potential` serverless route attempts to fetch publicly available listing metadata/text, creates a careful Property Potential Snapshot, and forwards the submitted URL/details, result, name, email, and phone to `STAYDOG_LEAD_ENDPOINT` when connected.
 
 Until endpoints are connected, the frontend safely stores the latest partner lead or score submission locally and labels it as staged.

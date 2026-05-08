@@ -82,8 +82,8 @@ export default function PropertyScorePage({ navigate }) {
           </div>
           <h1>StayDog Property Potential Score.</h1>
           <p>
-            A careful, non-guaranteed snapshot of guest appeal, amenities, listing quality, operational complexity, and
-            possible upside indicators.
+            A careful snapshot of guest appeal, amenities, listing quality, operational complexity, and possible upside
+            indicators.
           </p>
         </section>
 
@@ -140,7 +140,7 @@ export default function PropertyScorePage({ navigate }) {
             </div>
 
             <p className="score-disclaimer">
-              This AI-assisted snapshot is for informational purposes only and is not a revenue guarantee.
+              * AI-assisted snapshots are informational only. Revenue outcomes vary and require StayDog review.
             </p>
 
             <button type="submit" disabled={!canSubmit || status === 'submitting'} className="score-submit">

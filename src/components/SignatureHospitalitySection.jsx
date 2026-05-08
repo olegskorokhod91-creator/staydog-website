@@ -19,7 +19,7 @@ export default function SignatureHospitalitySection() {
         </div>
 
         <div className="signature-destinations">
-          {signatureDestinations.map(({ name, copy, image, icon: Icon }) => (
+          {signatureDestinations.map(({ name, copy, image, url, linkLabel, icon: Icon }) => (
             <article className="signature-feature" key={name} data-reveal>
               <img
                 src={image}
@@ -33,9 +33,9 @@ export default function SignatureHospitalitySection() {
                 <Icon aria-hidden="true" />
                 <h3>{name}</h3>
                 <p>{copy}</p>
-                <span>
-                  Hospitality proof point <ArrowRight aria-hidden="true" size={15} />
-                </span>
+                <a href={url} target="_blank" rel="noreferrer">
+                  {linkLabel} <ArrowRight aria-hidden="true" size={15} />
+                </a>
               </div>
             </article>
           ))}

@@ -77,7 +77,7 @@ function analyze(payload, fetched = null) {
   return {
     score,
     sourceNote: fetched ? 'Generated from publicly accessible page text and submitted details.' : 'Generated from submitted details.',
-    disclaimer: 'This AI-assisted snapshot is for informational purposes only and is not a revenue guarantee.',
+    disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories,
     missingOpportunities: [
       'Direct-booking savings and owner-grade management may need clearer positioning.',

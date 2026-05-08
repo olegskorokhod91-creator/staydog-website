@@ -78,17 +78,21 @@ export const signatureDestinations = [
     name: 'The Sandbar Lodge at Torch Lake',
     copy: 'A hospitality destination that brings StayDog credibility beyond simple property oversight: guest experience, operations, and place-making under one roof.',
     image: '/assets/ui/signature-sandbar.webp',
+    url: 'https://thesandbarlodge.com/',
+    linkLabel: 'Visit The Sandbar Lodge',
     icon: Home,
   },
   {
-    name: 'Pleasant Valley Resort',
+    name: 'Arcadia at Pleasant Valley Resort',
     copy: 'A companion proof point for resort-level standards, owner trust, and operational range across memorable vacation stays.',
-    image: '/assets/ui/signature-resort.webp',
+    image: '/assets/ui/pleasant-valley-arcadia.jpg',
+    url: 'https://pleasantvalleyarcadia.com/',
+    linkLabel: 'Visit Arcadia at Pleasant Valley Resort',
     icon: MapPin,
   },
 ]
 
-export const platformBadges = ['Airbnb', 'Vrbo', 'Booking.com', 'Direct Booking']
+export const platformBadges = ['Airbnb', 'VRBO', 'Booking.com', 'Expedia']
 
 export const funnelQuestions = [
   {

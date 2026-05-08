@@ -36,7 +36,7 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
   return {
     score,
     sourceNote,
-    disclaimer: 'This AI-assisted snapshot is for informational purposes only and is not a revenue guarantee.',
+    disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories: {
       guestAppeal,
       amenityStrength,

@@ -1,4 +1,4 @@
-import { ArrowDown, BarChart3, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowDown, BarChart3, BadgeCheck, ShieldCheck, Sparkles } from 'lucide-react'
 import { bookingUrl, platformBadges, proofStats, propertyImages } from '../data/content'
 import CtaButton from './CtaButton'
 
@@ -34,9 +34,13 @@ export default function HeroSection({ navigate }) {
               New owner tool
             </span>
             <strong>Check your property&apos;s full earning potential</strong>
-            <small>Get a careful AI-assisted StayDog snapshot. No revenue guarantees.</small>
+            <small>Get an AI-assisted StayDog snapshot with opportunity notes and recommended next steps.</small>
           </button>
           <div className="platform-row" aria-label="Featured booking platforms" data-reveal>
+            <strong>
+              <BadgeCheck aria-hidden="true" size={15} />
+              Featured on
+            </strong>
             {platformBadges.map((badge) => (
               <span key={badge}>{badge}</span>
             ))}

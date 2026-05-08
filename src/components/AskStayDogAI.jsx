@@ -25,7 +25,7 @@ function answerFor(input, navigate) {
 
   if (text.includes('price') || text.includes('revenue') || text.includes('income') || text.includes('dynamic')) {
     return {
-      text: 'StayDog uses dynamic pricing review, listing optimization, and hospitality operations to support revenue. I cannot promise a specific number without property details and human market review.',
+      text: 'StayDog uses dynamic pricing review, listing optimization, and hospitality operations to support revenue. For property-specific numbers, the right next step is a human market review.',
       action: {
         label: 'Start Owner Funnel',
         onClick: () => navigate('/partner-with-us'),
@@ -45,9 +45,9 @@ function answerFor(input, navigate) {
     }
   }
 
-  if (text.includes('market') || text.includes('michigan') || text.includes('indiana')) {
+  if (text.includes('market') || text.includes('michigan') || text.includes('indiana') || text.includes('illinois')) {
     return {
-      text: 'StayDog currently highlights Michigan and Indiana markets, while selectively considering expansion where service quality can remain high.',
+      text: 'StayDog currently highlights Michigan, Indiana, and Illinois markets, while selectively considering expansion where service quality can remain high.',
     }
   }
 
