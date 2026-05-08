@@ -145,10 +145,9 @@ export const funnelQuestions = [
     icon: CalendarClock,
   },
   {
-    key: 'contactDetails',
+    key: 'contactName',
     label: 'Who should StayDog contact?',
-    type: 'textarea',
-    placeholder: 'Name, email, phone, and the best way to reach you.',
+    type: 'contact',
     icon: Headphones,
   },
 ]

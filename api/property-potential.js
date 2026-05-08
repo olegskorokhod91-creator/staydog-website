@@ -7,6 +7,8 @@ const snapshotSchema = {
   required: [
     'score',
     'sourceNote',
+    'analysisMode',
+    'sourceQuality',
     'managerSummary',
     'conversationMessage',
     'categories',
@@ -23,6 +25,8 @@ const snapshotSchema = {
   properties: {
     score: { type: 'number' },
     sourceNote: { type: 'string' },
+    analysisMode: { type: 'string' },
+    sourceQuality: { type: 'string' },
     managerSummary: { type: 'string' },
     conversationMessage: { type: 'string' },
     categories: {
@@ -104,6 +108,125 @@ function includesAny(text, words) {
   return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0)
 }
 
+function hasUsableListingText(fetched) {
+  const text = `${fetched?.metadata?.title || ''} ${fetched?.metadata?.description || ''} ${fetched?.visibleText || ''}`.toLowerCase()
+  const blockedSignals = ['enable javascript', 'access denied', 'captcha', 'robot', 'blocked', 'verify you are human']
+  const propertySignals = [
+    'bedroom',
+    'bath',
+    'guest',
+    'sleeps',
+    'amenity',
+    'kitchen',
+    'parking',
+    'hot tub',
+    'pool',
+    'review',
+    'rating',
+    'stay',
+  ]
+
+  return text.length > 700 && includesAny(text, blockedSignals) === 0 && includesAny(text, propertySignals) >= 2
+}
+
+function listSignals(combined) {
+  const signals = [
+    ['hot tub', 'hot tub'],
+    ['pool', 'pool'],
+    ['lake', 'lake access or lake positioning'],
+    ['beach', 'beach proximity'],
+    ['fire pit', 'fire pit'],
+    ['game room', 'game room'],
+    ['deck', 'deck or outdoor gathering space'],
+    ['grill', 'grill'],
+    ['sauna', 'sauna'],
+    ['walkable', 'walkability'],
+    ['pet', 'pet-friendly potential'],
+    ['downtown', 'downtown proximity'],
+    ['family', 'family-friendly positioning'],
+    ['view', 'view-driven appeal'],
+  ]
+
+  return signals.filter(([needle]) => combined.includes(needle)).map(([, label]) => label)
+}
+
+function pickFallbackInsights(combined, signals) {
+  const hasHotTub = combined.includes('hot tub')
+  const hasPool = combined.includes('pool')
+  const hasLakeOrBeach = combined.includes('lake') || combined.includes('beach')
+  const hasWalkable = combined.includes('walkable') || combined.includes('downtown')
+  const hasPets = combined.includes('pet')
+  const hasReviews = combined.includes('review') || combined.includes('rating') || combined.includes('superhost')
+  const hasPhotos = combined.includes('photo') || combined.includes('gallery') || combined.includes('tour')
+  const hasFamily = combined.includes('family') || combined.includes('sleeps') || combined.includes('bedroom')
+
+  return {
+    managerSummary: signals.length
+      ? `This looks most promising around ${signals.slice(0, 3).join(', ')}. The opportunity is to turn those features into a sharper guest promise and make sure the operations can consistently support that promise.`
+      : 'The URL/details provided only gave limited property signal. A stronger review needs listing copy, amenities, photo notes, and recent performance context.',
+    topTakeaways: [
+      hasLakeOrBeach
+        ? 'Lead with the water or destination lifestyle immediately; that is likely the emotional hook.'
+        : 'Lead with the strongest guest use case in the first screen: family trip, weekend escape, group stay, or work-friendly retreat.',
+      hasReviews
+        ? 'Existing review/rating signals should be used as trust proof, but the listing still needs a clear reason to choose it.'
+        : 'If review proof is limited, the photos, amenities, and description need to carry more trust-building weight.',
+      hasHotTub || hasPool
+        ? 'Premium amenities can improve appeal, but they also raise cleaning, inspection, and maintenance expectations.'
+        : 'The next upside may come from better merchandising, stronger amenities, or clearer local experience positioning.',
+    ],
+    guestAppealNotes: [
+      hasFamily
+        ? 'Make sleeping layout, gathering spaces, parking, and kid/family convenience obvious before guests have to hunt for details.'
+        : 'Clarify exactly who this stay is perfect for and make that guest type feel seen in the first few lines.',
+      hasWalkable
+        ? 'If the property is walkable or close to downtown, quantify that advantage with nearby attractions and time-to-destination details.'
+        : 'If location is not the main hook, lean harder into comfort, amenities, privacy, and easy arrival.',
+    ],
+    revenueLevers: [
+      hasHotTub || hasPool
+        ? 'Review premium amenity pricing by season and weekend demand, especially around peak stay patterns.'
+        : 'Review minimum stays, weekend premiums, shoulder-season offers, and gap-night strategy.',
+      hasLakeOrBeach
+        ? 'Build pricing around seasonal demand windows and weather-dependent booking behavior.'
+        : 'Use listing quality and amenity positioning to support rate confidence before chasing occupancy.',
+    ],
+    operationalWatchouts: [
+      hasHotTub || hasPool
+        ? 'Create a reset checklist for water amenities, guest instructions, photos after service, and issue escalation.'
+        : 'Document cleaning standards, supply cadence, access instructions, and maintenance response expectations.',
+      hasPets
+        ? 'Pet-friendly positioning needs clear rules, cleaning expectations, damage process, and guest messaging.'
+        : 'Clarify house rules and arrival flow so guest questions do not become recurring manual work.',
+    ],
+    missingOpportunities: [
+      hasPhotos
+        ? 'Photo order may still need a stronger first-five sequence focused on booking emotion, not room-by-room documentation.'
+        : 'Photo quality and photo order need review; the listing should show the reason to book before details.',
+      hasLakeOrBeach
+        ? 'Water/destination positioning should be repeated in title, intro copy, photo order, and amenity descriptions.'
+        : 'The listing may need a more memorable hook that separates it from comparable homes nearby.',
+      'Direct-booking and professional management value can be clearer without sounding corporate.',
+    ],
+    recommendedImprovements: [
+      hasHotTub || hasPool
+        ? 'Add or improve amenity instructions, safety notes, service cadence, and reset standards before scaling bookings.'
+        : 'Review the amenity package and identify one or two upgrades that would photograph well and improve guest decision-making.',
+      hasReviews
+        ? 'Pull the strongest review themes into the opening copy and image captions where platforms allow.'
+        : 'Build more trust signals into the listing: clarity, policies, arrival confidence, and professional guest care.',
+      'Compare the first screen against five nearby competitors and make the strongest StayDog-managed advantage obvious.',
+    ],
+    firstSuggestedSteps: [
+      'Paste the listing description, amenity list, bedroom/bath count, and current pain points for a deeper review.',
+      hasPhotos
+        ? 'Audit whether the first five photos sell the stay or merely document the property.'
+        : 'Gather the current first ten photos or screenshots so StayDog can review visual merchandising.',
+      'Review operations before pricing: cleaning, access, maintenance, guest messaging, supplies, and vendor coverage.',
+    ],
+  }
+}
+
 function cleanScore(value) {
   return Math.max(0, Math.min(100, Math.round(Number(value) || 0)))
 }
@@ -119,6 +242,8 @@ function normalizeSnapshot(result, fallback) {
     ...result,
     score: cleanScore(result.score || fallback.score),
     categories: Object.fromEntries(Object.entries(categories).map(([key, value]) => [key, cleanScore(value)])),
+    analysisMode: result.analysisMode || 'AI manager review',
+    sourceQuality: result.sourceQuality || fallback.sourceQuality,
     disclaimer: result.disclaimer || fallback.disclaimer,
   }
 }
@@ -130,6 +255,8 @@ function analyze(payload, fetched = null) {
   const complexityHits = includesAny(combined, ['pool', 'hot tub', 'large', 'multi', 'shared', 'hoa', 'remote', 'pets'])
   const listingHits = includesAny(combined, ['superhost', 'reviews', 'rating', 'guest favorite', 'booking', 'direct'])
   const photoHits = includesAny(combined, ['photo', 'photos', 'gallery', 'professional', 'tour', 'bright'])
+  const signals = listSignals(combined)
+  const insights = pickFallbackInsights(combined, signals)
 
   const categories = {
     guestAppeal: clamp(70 + amenityHits * 3 + qualityHits * 2),
@@ -152,45 +279,25 @@ function analyze(payload, fetched = null) {
 
   return {
     score,
-    sourceNote: fetched ? 'Generated from publicly accessible page text and submitted details.' : 'Generated from submitted details.',
-    managerSummary:
-      'This property has enough signal for a useful first-pass review. The strongest next move is to clarify the guest story, tighten the listing presentation, and review the operating plan before scaling bookings.',
+    sourceNote: fetched
+      ? `Quick estimate based on accessible listing text. Detected signals: ${signals.slice(0, 5).join(', ') || 'limited public details'}.`
+      : 'Quick estimate based on submitted details.',
+    analysisMode: 'Quick estimate',
+    sourceQuality: fetched ? 'Public listing text' : 'Manual/submitted details',
+    managerSummary: insights.managerSummary,
     conversationMessage:
-      'If I were reviewing this as a short-term rental operator, I would start by asking: what is the one reason a guest should choose this home over the next five listings nearby? The answer should show up in the first photos, the title, the amenities, and the pricing strategy.',
+      signals.length
+        ? `If I were reviewing this as an operator, I would pressure-test whether ${signals[0]} is clearly visible in the first photos, title, opening copy, and guest instructions.`
+        : 'If I were reviewing this as an operator, I would ask for the listing copy, first ten photos, amenity list, and current operating pain points before giving deeper advice.',
     disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories,
-    topTakeaways: [
-      'The property appears to have enough guest-facing appeal to justify a deeper StayDog review.',
-      'The listing story should make the strongest amenity and location advantages obvious in the first screen.',
-      'Operations need to be easy to repeat: access, cleaning, supplies, maintenance, and guest messaging all matter.',
-    ],
-    guestAppealNotes: [
-      'Lead with the most emotional guest moments: gathering spaces, outdoor amenities, views, walkability, or family convenience.',
-      'Make the first five photos feel like a complete reason to book, not just a tour of rooms.',
-    ],
-    revenueLevers: [
-      'Review minimum stays, weekend premiums, seasonal demand windows, and gap-night strategy.',
-      'Improve direct-booking positioning and platform copy so guests understand value quickly.',
-    ],
-    operationalWatchouts: [
-      'Confirm turnover complexity, supply cadence, smart lock reliability, and maintenance response expectations.',
-      'If premium amenities are offered, document inspection and reset standards clearly.',
-    ],
-    missingOpportunities: [
-      'Direct-booking savings and owner-grade management may need clearer positioning.',
-      'The listing may benefit from a sharper first-screen amenity story.',
-      'Guest-facing operations should be reviewed before promising premium service standards.',
-    ],
-    recommendedImprovements: [
-      'Use the strongest exterior, gathering-space, and amenity photos at the front of the listing.',
-      'Clarify guest flow: parking, access, sleeping layout, pets, quiet hours, and nearby attractions.',
-      'Review pricing strategy, minimum stays, turnover cadence, supplies, smart locks, and vendor coverage.',
-    ],
-    firstSuggestedSteps: [
-      'Send StayDog the listing, current pain points, and any recent performance context.',
-      'Audit the first five photos and rewrite the opening copy around the strongest guest promise.',
-      'Review operations before pricing: cleaning, access, maintenance, guest messaging, and supplies.',
-    ],
+    topTakeaways: insights.topTakeaways,
+    guestAppealNotes: insights.guestAppealNotes,
+    revenueLevers: insights.revenueLevers,
+    operationalWatchouts: insights.operationalWatchouts,
+    missingOpportunities: insights.missingOpportunities,
+    recommendedImprovements: insights.recommendedImprovements,
+    firstSuggestedSteps: insights.firstSuggestedSteps,
     stayDogFit:
       'StayDog may be a good fit if the owner wants hospitality-first guest care, dynamic pricing review, maintenance coordination, and a more hands-off operating model.',
   }
@@ -233,7 +340,7 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
         {
           role: 'system',
           content:
-            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema.',
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed.',
         },
         {
           role: 'user',
@@ -292,11 +399,19 @@ export default async function handler(req, res) {
     if (payload.mode === 'url' && payload.listingUrl) {
       try {
         fetched = await fetchListingText(payload.listingUrl)
+        if (!hasUsableListingText(fetched) && !payload.details) {
+          res.status(200).json({
+            status: 'fallback-required',
+            message:
+              'That listing did not expose enough usable property detail. Continue to Partner With Us and StayDog can review it directly.',
+          })
+          return
+        }
       } catch (error) {
         res.status(200).json({
           status: 'fallback-required',
           message:
-            'That listing could not be accessed automatically. Please paste listing details manually or prepare screenshots for StayDog review.',
+            'That listing could not be accessed automatically. Continue to Partner With Us and StayDog can review it directly.',
         })
         return
       }
@@ -308,6 +423,7 @@ export default async function handler(req, res) {
     try {
       result = await createOpenAISnapshot(payload, fetched, fallback)
     } catch (error) {
+      console.error('OpenAI property snapshot failed:', error)
       result = fallback
     }
 

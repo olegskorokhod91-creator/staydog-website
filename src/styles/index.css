@@ -2116,28 +2116,46 @@ p {
   gap: 1rem;
 }
 
-.mode-toggle {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.mode-toggle button,
+.score-url-intro,
 .score-submit {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.55rem;
-  min-height: 52px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.score-url-intro {
+  padding: 1rem;
+}
+
+.score-url-intro svg {
+  flex: 0 0 auto;
+  color: var(--glowblue);
+}
+
+.score-url-intro span {
+  display: block;
+  color: #fff;
+  font-weight: 850;
+}
+
+.score-url-intro p {
+  margin-top: 0.2rem;
+  color: #c7d8e6;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.score-submit {
+  justify-content: center;
+  min-height: 52px;
   color: #fff;
   font-weight: 860;
   padding: 0.84rem 1rem;
 }
 
-.mode-toggle button.is-selected,
 .score-submit {
   background: linear-gradient(135deg, #58c7ff, #d8ad68);
   color: #06111f;
@@ -2166,9 +2184,20 @@ p {
   text-transform: none;
 }
 
-.score-contact-grid {
+.score-contact-grid,
+.contact-field-grid {
   display: grid;
   gap: 0.75rem;
+}
+
+.contact-field-grid label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--glowblue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .score-disclaimer,
@@ -2272,6 +2301,14 @@ p {
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.score-manager-note small {
+  display: block;
+  margin-top: 0.7rem;
+  color: #9fb8cc;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .score-manager-note p,
@@ -2706,7 +2743,6 @@ p {
   .score-teaser-card,
   .score-insight-grid,
   .signal-lanes,
-  .mode-toggle,
   .choice-grid {
     grid-template-columns: 1fr;
   }

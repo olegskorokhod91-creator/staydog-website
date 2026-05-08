@@ -4,7 +4,7 @@ import { funnelQuestions, proofStats } from '../data/content'
 import { submitPartnerLead } from '../services/leadService'
 import CtaButton from './CtaButton'
 
-function QuestionField({ question, value, onChange }) {
+function QuestionField({ question, value, onChange, form, updateContact }) {
   if (question.type === 'select') {
     return (
       <div className="choice-grid">
@@ -18,6 +18,40 @@ function QuestionField({ question, value, onChange }) {
             {option}
           </button>
         ))}
+      </div>
+    )
+  }
+
+  if (question.type === 'contact') {
+    return (
+      <div className="contact-field-grid">
+        <label>
+          Name
+          <input
+            value={form.contactName || ''}
+            onChange={(event) => updateContact('contactName', event.target.value)}
+            placeholder="Full name"
+            autoFocus
+          />
+        </label>
+        <label>
+          Email
+          <input
+            value={form.contactEmail || ''}
+            onChange={(event) => updateContact('contactEmail', event.target.value)}
+            placeholder="you@example.com"
+            inputMode="email"
+          />
+        </label>
+        <label>
+          Phone
+          <input
+            value={form.contactPhone || ''}
+            onChange={(event) => updateContact('contactPhone', event.target.value)}
+            placeholder="(248) 382-8370"
+            type="tel"
+          />
+        </label>
       </div>
     )
   }
@@ -57,7 +91,9 @@ export default function PartnerFunnel({ navigate }) {
   const value = form[question?.key]
 
   const complete = status === 'submitted' || status === 'staged'
-  const canAdvance = question?.optional || String(value || '').trim().length > 0
+  const canAdvance = question?.type === 'contact'
+    ? Boolean(form.contactName?.trim() && form.contactEmail?.trim() && form.contactPhone?.trim())
+    : question?.optional || String(value || '').trim().length > 0
 
   const answersPreview = useMemo(
     () =>
@@ -70,6 +106,10 @@ export default function PartnerFunnel({ navigate }) {
 
   const updateValue = (nextValue) => {
     setForm((current) => ({ ...current, [question.key]: nextValue }))
+  }
+
+  const updateContact = (key, nextValue) => {
+    setForm((current) => ({ ...current, [key]: nextValue }))
   }
 
   const goNext = async () => {
@@ -153,7 +193,13 @@ export default function PartnerFunnel({ navigate }) {
                   <span>Question {step + 1} of {funnelQuestions.length}</span>
                 </div>
                 <h2>{question.label}</h2>
-                <QuestionField question={question} value={value} onChange={updateValue} />
+                <QuestionField
+                  question={question}
+                  value={value}
+                  onChange={updateValue}
+                  form={form}
+                  updateContact={updateContact}
+                />
 
                 <div className="funnel-inline-contact">
                   <span>Rather talk to StayDog directly?</span>

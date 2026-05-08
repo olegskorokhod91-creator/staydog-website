@@ -8,7 +8,6 @@ import {
   Home,
   Link2,
   Loader2,
-  PencilLine,
   ShieldCheck,
   TrendingUp,
   Wrench,
@@ -21,9 +20,6 @@ const initialForm = {
   mode: 'url',
   listingUrl: '',
   details: '',
-  name: '',
-  email: '',
-  phone: '',
 }
 
 const labels = {
@@ -64,8 +60,7 @@ export default function PropertyScorePage({ navigate }) {
   const [result, setResult] = useState(null)
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  const needsDetails = form.mode === 'manual'
-  const canSubmit = form.name.trim() && form.email.trim() && (form.mode === 'url' ? form.listingUrl.trim() : form.details.trim())
+  const canSubmit = form.listingUrl.trim()
 
   const submit = async (event) => {
     event.preventDefault()
@@ -80,11 +75,6 @@ export default function PropertyScorePage({ navigate }) {
     setMessage(response.message || '')
 
     if (response.status === 'fallback-required') {
-      setForm((current) => ({
-        ...current,
-        mode: 'manual',
-        details: current.details || `Listing URL: ${current.listingUrl}\n\nPaste listing highlights, amenities, photo notes, reviews, pricing context, or screenshots later.`,
-      }))
       return
     }
 
@@ -113,55 +103,23 @@ export default function PropertyScorePage({ navigate }) {
 
         <div className="score-workspace">
           <form className="score-form-panel" onSubmit={submit} data-reveal>
-            <div className="mode-toggle" aria-label="Choose score input method">
-              <button type="button" className={form.mode === 'url' ? 'is-selected' : ''} onClick={() => update('mode', 'url')}>
-                <Link2 aria-hidden="true" />
-                Paste URL
-              </button>
-              <button type="button" className={form.mode === 'manual' ? 'is-selected' : ''} onClick={() => update('mode', 'manual')}>
-                <PencilLine aria-hidden="true" />
-                Manual details
-              </button>
+            <div className="score-url-intro">
+              <Link2 aria-hidden="true" />
+              <div>
+                <span>Paste a public listing URL</span>
+                <p>Airbnb, VRBO, Booking.com, Expedia, Zillow, or your direct booking page.</p>
+              </div>
             </div>
 
-            {form.mode === 'url' && (
-              <label>
-                Listing URL
-                <input
-                  value={form.listingUrl}
-                  onChange={(event) => update('listingUrl', event.target.value)}
-                  placeholder="https://www.airbnb.com/rooms/..."
-                  type="url"
-                />
-              </label>
-            )}
-
-            {needsDetails && (
-              <label>
-                Property details
-                <textarea
-                  value={form.details}
-                  onChange={(event) => update('details', event.target.value)}
-                  placeholder="Bedrooms, bathrooms, amenities, location, listing copy, photo notes, reviews, pain points..."
-                  rows={8}
-                />
-              </label>
-            )}
-
-            <div className="score-contact-grid">
-              <label>
-                Name
-                <input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="Full name" />
-              </label>
-              <label>
-                Email
-                <input value={form.email} onChange={(event) => update('email', event.target.value)} placeholder="you@example.com" inputMode="email" />
-              </label>
-              <label>
-                Phone
-                <input value={form.phone} onChange={(event) => update('phone', event.target.value)} placeholder="(248) 382-8370" type="tel" />
-              </label>
-            </div>
+            <label>
+              Listing URL
+              <input
+                value={form.listingUrl}
+                onChange={(event) => update('listingUrl', event.target.value)}
+                placeholder="https://www.airbnb.com/rooms/..."
+                type="url"
+              />
+            </label>
 
             <p className="score-disclaimer">
               * AI-assisted snapshots are informational only. Revenue outcomes vary and require StayDog review.
@@ -185,14 +143,14 @@ export default function PropertyScorePage({ navigate }) {
                 </div>
                 <h2>Property Potential Snapshot</h2>
                 <p>
-                  Paste a public listing URL or enter details manually. If the page blocks access, the tool will ask for
-                  manual listing details instead.
+                  Paste a public listing URL. If the page blocks access, StayDog can still review the property after you
+                  continue to Partner With Us.
                 </p>
               </div>
             ) : (
               <div className="score-result">
                 <div className="score-total">
-                  <span>StayDog Potential Score</span>
+                  <span>{result.analysisMode || 'StayDog Potential Score'}</span>
                   <strong>{result.score}</strong>
                   <small>out of 100</small>
                 </div>
@@ -200,6 +158,11 @@ export default function PropertyScorePage({ navigate }) {
                 <div className="score-manager-note">
                   <span>Operator read</span>
                   <p>{result.managerSummary}</p>
+                  {(result.sourceNote || result.sourceQuality) && (
+                    <small>
+                      {result.sourceQuality || 'Analysis source'}: {result.sourceNote}
+                    </small>
+                  )}
                 </div>
 
                 <div className="score-meter-grid">
