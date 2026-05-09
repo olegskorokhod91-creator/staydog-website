@@ -329,17 +329,39 @@ p {
 
 .hero-title-lockup {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: clamp(1rem, 2.5vw, 1.8rem);
   align-items: center;
 }
 
 .hero-title-lockup h1 {
-  font-size: clamp(3.45rem, 7vw, 6.1rem);
+  grid-column: 1;
+  grid-row: 1;
+  max-width: 850px;
+  color: #f6fbff;
+  font-size: clamp(3.75rem, 7.1vw, 6.55rem);
+  line-height: 0.9;
+  text-shadow:
+    0 0 34px rgba(88, 199, 255, 0.14),
+    0 22px 72px rgba(0, 0, 0, 0.32);
+}
+
+.hero-title-lockup h1 span {
+  display: block;
+}
+
+.hero-title-lockup h1 em {
+  background: linear-gradient(115deg, #f7fcff 0%, #8fe8ff 45%, #d8ad68 100%);
+  background-clip: text;
+  color: transparent;
+  font-style: normal;
+  text-shadow: none;
 }
 
 .hero-logo-showcase {
   position: relative;
+  grid-column: 2;
+  grid-row: 1;
   display: grid;
   width: clamp(106px, 12vw, 156px);
   aspect-ratio: 1;
@@ -1356,15 +1378,39 @@ p {
 }
 
 .property-showcase {
+  position: relative;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr 0.8fr;
-  grid-auto-rows: 220px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: 122px;
   gap: 1rem;
   margin-top: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(7, 19, 34, 0.1);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(88, 199, 255, 0.18), transparent 22rem),
+    radial-gradient(circle at 88% 72%, rgba(216, 173, 104, 0.14), transparent 20rem),
+    rgba(255, 255, 255, 0.62);
+  padding: 1rem;
+  box-shadow: 0 28px 90px rgba(12, 24, 40, 0.12);
+}
+
+.property-showcase::before {
+  position: absolute;
+  inset: 1rem;
+  content: "";
+  border: 1px solid rgba(14, 118, 168, 0.08);
+  border-radius: calc(var(--radius) - 4px);
+  background:
+    linear-gradient(90deg, transparent, rgba(88, 199, 255, 0.1), transparent),
+    radial-gradient(circle, rgba(88, 199, 255, 0.08), transparent 62%);
+  pointer-events: none;
+  transform: perspective(900px) rotateX(62deg);
 }
 
 .property-card {
   position: relative;
+  z-index: 1;
   overflow: hidden;
   border-radius: var(--radius);
   background:
@@ -1374,12 +1420,28 @@ p {
 }
 
 .property-card-1 {
+  grid-column: span 6;
+  grid-row: span 4;
+}
+
+.property-card-2 {
+  grid-column: span 3;
   grid-row: span 2;
 }
 
-.property-card-4,
+.property-card-3 {
+  grid-column: span 3;
+  grid-row: span 3;
+}
+
+.property-card-4 {
+  grid-column: span 3;
+  grid-row: span 2;
+}
+
 .property-card-5 {
-  grid-column: span 1;
+  grid-column: span 3;
+  grid-row: span 1;
 }
 
 .property-card img,
@@ -2762,16 +2824,27 @@ p {
   }
 
   .property-showcase {
-    grid-template-columns: 1fr;
-    grid-auto-rows: minmax(260px, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 180px;
+    gap: 0.75rem;
+    padding: 0.75rem;
   }
 
   .property-card-1 {
+    grid-column: 1 / -1;
+    grid-row: span 2;
+  }
+
+  .property-card-2,
+  .property-card-3,
+  .property-card-4,
+  .property-card-5 {
+    grid-column: span 1;
     grid-row: span 1;
   }
 
   .property-card {
-    min-height: 300px;
+    min-height: 0;
   }
 
   .signature-feature {
@@ -2920,6 +2993,16 @@ p {
   .hero-property-gallery {
     position: relative;
     height: 430px;
+  }
+
+  .property-showcase {
+    grid-auto-rows: 132px;
+    gap: 0.55rem;
+    padding: 0.55rem;
+  }
+
+  .property-card-1 {
+    grid-row: span 2;
   }
 
   .hero-property-gallery::before {

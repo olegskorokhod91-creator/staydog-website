@@ -16,7 +16,11 @@ export default function HeroSection({ navigate }) {
             <div className="hero-logo-showcase" aria-label="StayDog Rentals logo">
               <img src="/assets/logo/staydog-logo.jpg" alt="StayDog Rentals" />
             </div>
-            <h1>Sit Back. Let StayDog Handle It.</h1>
+            <h1>
+              <span>Sit Back.</span>
+              <span>Let <em>StayDog</em></span>
+              <span>Handle It.</span>
+            </h1>
           </div>
           <p className="hero-subcopy" data-reveal>
             We manage your vacation rental like a luxury hospitality brand - guest communication, dynamic pricing,
