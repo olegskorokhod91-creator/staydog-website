@@ -76,7 +76,7 @@ export const propertyImages = [
 export const signatureDestinations = [
   {
     name: 'The Sandbar Lodge at Torch Lake',
-    copy: 'A hospitality destination that brings StayDog credibility beyond simple property oversight: guest experience, operations, and place-making under one roof.',
+    copy: 'A modern lodge near Torch Lake built for weekend escapes, group trips, weddings, and full-property buyouts, with premium amenities like a hot tub, sauna, cold plunge, speakeasy, pickleball, and firepit.',
     image: '/assets/ui/signature-sandbar.webp',
     url: 'https://thesandbarlodge.com/',
     linkLabel: 'Visit The Sandbar Lodge',
@@ -84,7 +84,7 @@ export const signatureDestinations = [
   },
   {
     name: 'Arcadia at Pleasant Valley Resort',
-    copy: 'A companion proof point for resort-level standards, owner trust, and operational range across memorable vacation stays.',
+    copy: 'A relaxed Up North getaway near Lake Michigan, offering cabins, lodge rooms, group stays, and outdoor amenities for families, golfers, wedding guests, and travelers exploring Arcadia and the surrounding lakeshore.',
     image: '/assets/ui/pleasant-valley-arcadia.jpg',
     url: 'https://pleasantvalleyarcadia.com/',
     linkLabel: 'Visit Arcadia at Pleasant Valley Resort',

@@ -330,7 +330,7 @@ p {
 .hero-title-lockup {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: clamp(1rem, 2.5vw, 1.8rem);
+  gap: clamp(0.9rem, 1.8vw, 1.35rem);
   align-items: center;
 }
 
@@ -339,8 +339,8 @@ p {
   grid-row: 1;
   max-width: 850px;
   color: #f6fbff;
-  font-size: clamp(3.75rem, 7.1vw, 6.55rem);
-  line-height: 0.9;
+  font-size: clamp(3.35rem, 5.1vw, 5.1rem);
+  line-height: 0.94;
   text-shadow:
     0 0 34px rgba(88, 199, 255, 0.14),
     0 22px 72px rgba(0, 0, 0, 0.32);
@@ -348,6 +348,7 @@ p {
 
 .hero-title-lockup h1 span {
   display: block;
+  white-space: nowrap;
 }
 
 .hero-title-lockup h1 em {
@@ -360,11 +361,13 @@ p {
 
 .hero-logo-showcase {
   position: relative;
+  --logo-offset-x: clamp(1.6rem, 3.6vw, 4rem);
   grid-column: 2;
   grid-row: 1;
   display: grid;
-  width: clamp(106px, 12vw, 156px);
+  width: clamp(102px, 8vw, 136px);
   aspect-ratio: 1;
+  margin-left: clamp(1.1rem, 3.2vw, 3.4rem);
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(158, 231, 255, 0.26);
@@ -375,6 +378,7 @@ p {
   box-shadow:
     0 26px 80px rgba(0, 0, 0, 0.28),
     0 0 46px rgba(88, 199, 255, 0.2);
+  transform: translateX(var(--logo-offset-x));
   animation: logoLift 5.5s ease-in-out infinite;
 }
 
@@ -394,8 +398,13 @@ p {
 }
 
 @keyframes logoLift {
+  0%,
+  100% {
+    transform: translateX(var(--logo-offset-x, 0));
+  }
+
   50% {
-    transform: translateY(-6px);
+    transform: translate(var(--logo-offset-x, 0), -6px);
   }
 }
 
@@ -2932,14 +2941,16 @@ p {
   .hero-title-lockup h1 {
     grid-column: 1;
     grid-row: 1;
-    font-size: clamp(2.5rem, 11.6vw, 3.6rem);
+    font-size: clamp(2.35rem, 10.5vw, 3.25rem);
     line-height: 0.95;
   }
 
   .hero-logo-showcase {
+    --logo-offset-x: 0px;
     grid-column: 2;
     grid-row: 1;
-    width: clamp(74px, 21vw, 92px);
+    width: clamp(68px, 19vw, 86px);
+    margin-left: 0;
     margin-top: 0.18rem;
   }
 
