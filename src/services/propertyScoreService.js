@@ -207,6 +207,12 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
     recommendedImprovements: insights.recommendedImprovements,
     firstSuggestedSteps: insights.firstSuggestedSteps,
     stayDogFit: 'StayDog may be a good fit if you want hospitality-first guest care, cleaner owner visibility, dynamic pricing review, and a more hands-off operating model.',
+    stayDogActionPlan: [
+      'Tighten the first-screen guest promise so the listing immediately explains who the stay is for and why it should be chosen over nearby alternatives.',
+      'Review the first five photos, title, and opening copy together so the strongest trip use case is obvious before guests scroll.',
+      'Pressure-test pricing, minimum stays, guest messaging, cleaning standards, supply cadence, and maintenance response before making bigger revenue recommendations.',
+      'Use a strategy call to discuss deeper ideas such as seasonal packaging, direct-booking positioning, owner reporting, vendor coverage, and upgrade priorities.',
+    ],
   }
 }
 

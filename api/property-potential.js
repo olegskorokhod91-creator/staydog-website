@@ -21,6 +21,7 @@ const snapshotSchema = {
     'recommendedImprovements',
     'firstSuggestedSteps',
     'stayDogFit',
+    'stayDogActionPlan',
     'disclaimer',
   ],
   properties: {
@@ -59,6 +60,7 @@ const snapshotSchema = {
     recommendedImprovements: { type: 'array', items: { type: 'string' } },
     firstSuggestedSteps: { type: 'array', items: { type: 'string' } },
     stayDogFit: { type: 'string' },
+    stayDogActionPlan: { type: 'array', items: { type: 'string' } },
     disclaimer: { type: 'string' },
   },
 }
@@ -399,7 +401,13 @@ function analyze(payload, fetched = null) {
     recommendedImprovements: insights.recommendedImprovements,
     firstSuggestedSteps: insights.firstSuggestedSteps,
     stayDogFit:
-      'StayDog may be a good fit if the owner wants hospitality-first guest care, dynamic pricing review, maintenance coordination, and a more hands-off operating model.',
+      'StayDog may be a good fit if the owner wants practical listing improvements, hospitality-first guest care, dynamic pricing review, vendor coordination, and a more hands-off operating model.',
+    stayDogActionPlan: [
+      'Tighten the first-screen guest promise so the listing immediately explains who the stay is for and why it should be chosen over nearby alternatives.',
+      'Review the first five photos, title, and opening copy together so the strongest trip use case is obvious before guests scroll.',
+      'Pressure-test pricing, minimum stays, guest messaging, cleaning standards, supply cadence, and maintenance response before making bigger revenue recommendations.',
+      'Use a strategy call to discuss deeper ideas such as seasonal packaging, direct-booking positioning, owner reporting, vendor coverage, and upgrade priorities.',
+    ],
   }
 }
 
@@ -442,7 +450,7 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
         {
           role: 'system',
           content:
-            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. visibleFacts must list only facts directly visible in the provided context.',
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. visibleFacts must list only facts directly visible in the provided context. recommendedImprovements must include 3-5 concrete, owner-friendly suggestions. stayDogFit must be 2-4 sentences explaining how StayDog can help operationally, not a generic one-liner. stayDogActionPlan must include 4 specific bullets: listing/positioning, pricing/revenue management, operations/guest care, and a final strategy-call item for more complex ideas.',
         },
         {
           role: 'user',

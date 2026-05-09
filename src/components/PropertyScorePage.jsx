@@ -222,9 +222,14 @@ export default function PropertyScorePage({ navigate }) {
                   <article>
                     <h3>Why StayDog may be a good fit</h3>
                     <p>{result.stayDogFit}</p>
+                    {result.stayDogActionPlan?.length > 0 && (
+                      <ul className="staydog-action-plan">
+                        {result.stayDogActionPlan.map((item) => <li key={item}>{item}</li>)}
+                      </ul>
+                    )}
                   </article>
                   <article>
-                    <h3>Manager note</h3>
+                    <h3>Next conversation</h3>
                     <p>{result.conversationMessage}</p>
                   </article>
                 </div>

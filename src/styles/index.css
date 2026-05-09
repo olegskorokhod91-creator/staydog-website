@@ -2564,6 +2564,23 @@ p {
   color: #c7d8e6;
 }
 
+.score-notes .staydog-action-plan {
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.staydog-action-plan li {
+  position: relative;
+  border-left: 2px solid rgba(216, 173, 104, 0.7);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.08), rgba(216, 173, 104, 0.06)),
+    rgba(255, 255, 255, 0.04);
+  padding: 0.65rem 0.75rem;
+}
+
 .score-notes p {
   color: #c7d8e6;
 }
