@@ -15,20 +15,34 @@ function clamp(value) {
 }
 
 function countMatches(text, words) {
-  return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0)
+  return words.reduce((count, word) => count + (hasPhrase(text, word) ? 1 : 0), 0)
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function hasPhrase(text, phrase) {
+  return new RegExp(`(^|[^a-z0-9])${escapeRegExp(phrase)}([^a-z0-9]|$)`, 'i').test(text)
 }
 
 function listSignals(text) {
   return [
     ['hot tub', 'hot tub'],
-    ['pool', 'pool'],
-    ['lake', 'lake access or lake positioning'],
+    ['swimming pool', 'pool'],
+    ['pool access', 'pool access'],
+    ['lakefront', 'lakefront positioning'],
+    ['lake access', 'lake access'],
     ['beach', 'beach proximity'],
     ['fire pit', 'fire pit'],
     ['game', 'game room or games'],
     ['deck', 'deck or outdoor gathering space'],
     ['grill', 'grill'],
     ['sauna', 'sauna'],
+    ['golf', 'golf destination appeal'],
+    ['ski', 'ski-season appeal'],
+    ['forest', 'wooded privacy'],
+    ['woods', 'wooded privacy'],
     ['walkable', 'walkability'],
     ['pet', 'pet-friendly potential'],
     ['downtown', 'downtown proximity'],
@@ -41,12 +55,15 @@ function listSignals(text) {
 
 function fallbackInsights(text, signals) {
   const hasHotTub = text.includes('hot tub')
-  const hasPool = text.includes('pool')
-  const hasLakeOrBeach = text.includes('lake') || text.includes('beach')
-  const hasWalkable = text.includes('walkable') || text.includes('downtown')
-  const hasPets = text.includes('pet')
-  const hasReviews = text.includes('review') || text.includes('rating') || text.includes('superhost')
-  const hasPhotos = text.includes('photo') || text.includes('gallery') || text.includes('tour')
+  const hasPool = hasPhrase(text, 'swimming pool') || hasPhrase(text, 'pool access')
+  const hasLakeOrBeach = hasPhrase(text, 'lakefront') || hasPhrase(text, 'lake access') || hasPhrase(text, 'beach')
+  const hasGolf = hasPhrase(text, 'golf')
+  const hasSki = hasPhrase(text, 'ski')
+  const hasWooded = hasPhrase(text, 'forest') || hasPhrase(text, 'woods') || hasPhrase(text, 'wooded')
+  const hasWalkable = hasPhrase(text, 'walkable') || hasPhrase(text, 'downtown')
+  const hasPets = hasPhrase(text, 'pet')
+  const hasReviews = hasPhrase(text, 'review') || hasPhrase(text, 'rating') || hasPhrase(text, 'guest favourite') || hasPhrase(text, 'guest favorite') || hasPhrase(text, 'superhost')
+  const hasPhotos = hasPhrase(text, 'photo') || hasPhrase(text, 'gallery') || hasPhrase(text, 'tour')
 
   return {
     managerSummary: signals.length
@@ -55,6 +72,10 @@ function fallbackInsights(text, signals) {
     topTakeaways: [
       hasLakeOrBeach
         ? 'Lead with the water or destination lifestyle immediately; that is likely the emotional hook.'
+        : hasGolf || hasSki
+          ? 'Lead with the golf/ski trip use case immediately; guests should understand the seasonal reason to book before they scan amenities.'
+          : hasWooded
+            ? 'Lead with the private wooded getaway feeling and make the outdoor gathering setup easy to understand.'
         : 'Lead with the strongest guest use case in the first screen: family trip, weekend escape, group stay, or work-friendly retreat.',
       hasReviews
         ? 'Existing review/rating signals should be used as trust proof, but the listing still needs a clear reason to choose it.'
@@ -66,7 +87,9 @@ function fallbackInsights(text, signals) {
     guestAppealNotes: [
       hasWalkable
         ? 'If the property is walkable or close to downtown, quantify that advantage with nearby attractions and time-to-destination details.'
-        : 'Clarify exactly who this stay is perfect for and make that guest type feel seen in the first few lines.',
+        : hasGolf || hasSki
+          ? 'Build the opening copy around practical trip planning: distance to golf, ski access, parking, gear storage, and apres-stay gathering space.'
+          : 'Clarify exactly who this stay is perfect for and make that guest type feel seen in the first few lines.',
       hasLakeOrBeach
         ? 'Use destination language and outdoor lifestyle photos early so guests understand the vacation feeling quickly.'
         : 'Make the first five photos feel like a complete reason to book, not just a tour of rooms.',
@@ -77,6 +100,8 @@ function fallbackInsights(text, signals) {
         : 'Review minimum stays, weekend premiums, shoulder-season offers, and gap-night strategy.',
       hasLakeOrBeach
         ? 'Build pricing around seasonal demand windows and weather-dependent booking behavior.'
+        : hasGolf || hasSki
+          ? 'Build pricing around golf weekends, ski periods, holiday breaks, and shoulder-season event demand.'
         : 'Use listing quality and amenity positioning to support rate confidence before chasing occupancy.',
     ],
     operationalWatchouts: [
@@ -93,6 +118,10 @@ function fallbackInsights(text, signals) {
         : 'Photo quality and photo order need review; the listing should show the reason to book before details.',
       hasLakeOrBeach
         ? 'Water/destination positioning should be repeated in title, intro copy, photo order, and amenity descriptions.'
+        : hasGolf || hasSki
+          ? 'Golf and ski positioning should be repeated in the title, first paragraph, first photos, and nearby-attraction details.'
+          : hasWooded
+            ? 'The outdoor/wooded setting can be merchandised more clearly with stronger first-photo sequencing and simple amenity storytelling.'
         : 'The listing may need a more memorable hook that separates it from comparable homes nearby.',
       'Direct-booking and professional management value can be clearer without sounding corporate.',
     ],
@@ -115,11 +144,29 @@ function fallbackInsights(text, signals) {
   }
 }
 
+function visibleFactsFromText(text) {
+  const facts = []
+  const guestMatch = text.match(/(\d+\+?\s*guests?)/i)
+  const bedroomMatch = text.match(/(\d+\s*bedrooms?)/i)
+  const bedMatch = text.match(/(\d+\s*beds?)/i)
+  const bathMatch = text.match(/(\d+(?:\.\d+)?\s*baths?)/i)
+
+  if (guestMatch?.[1]) facts.push(`Capacity signal: ${guestMatch[1]}`)
+  if (bedroomMatch?.[1]) facts.push(`Bedroom signal: ${bedroomMatch[1]}`)
+  if (bedMatch?.[1]) facts.push(`Bed signal: ${bedMatch[1]}`)
+  if (bathMatch?.[1]) facts.push(`Bath signal: ${bathMatch[1]}`)
+  if (hasPhrase(text, 'golf')) facts.push('Destination signal: golf')
+  if (hasPhrase(text, 'ski')) facts.push('Destination signal: ski')
+  if (hasPhrase(text, 'forest') || hasPhrase(text, 'woods') || hasPhrase(text, 'wooded')) facts.push('Setting signal: wooded/private outdoor setting')
+
+  return [...new Set(facts)].slice(0, 7)
+}
+
 export function createLocalSnapshot(payload, sourceNote = 'Generated from the details provided.') {
   const body = `${payload.listingUrl || ''} ${payload.details || ''}`.toLowerCase()
-  const amenityHits = countMatches(body, ['hot tub', 'pool', 'lake', 'beach', 'fire pit', 'game', 'deck', 'grill', 'sauna'])
-  const qualityHits = countMatches(body, ['renovated', 'luxury', 'new', 'updated', 'walkable', 'family', 'view', 'downtown'])
-  const complexityHits = countMatches(body, ['pool', 'hot tub', 'multi', 'large', 'remote', 'shared', 'hoa', 'older'])
+  const amenityHits = countMatches(body, ['hot tub', 'swimming pool', 'pool access', 'lakefront', 'lake access', 'beach', 'fire pit', 'game', 'deck', 'grill', 'sauna'])
+  const qualityHits = countMatches(body, ['renovated', 'luxury', 'new', 'updated', 'walkable', 'family', 'view', 'downtown', 'golf', 'ski', 'forest', 'woods'])
+  const complexityHits = countMatches(body, ['swimming pool', 'pool access', 'hot tub', 'multi', 'large', 'remote', 'shared', 'hoa', 'older'])
   const photoHints = countMatches(body, ['photo', 'professional', 'bright', 'view', 'tour'])
   const signals = listSignals(body)
   const insights = fallbackInsights(body, signals)
@@ -137,6 +184,7 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
     sourceNote,
     analysisMode: 'Quick estimate',
     sourceQuality: 'Browser fallback',
+    visibleFacts: visibleFactsFromText(body),
     managerSummary: insights.managerSummary,
     conversationMessage:
       signals.length

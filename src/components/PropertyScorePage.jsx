@@ -53,6 +53,20 @@ function InsightCard({ icon: Icon, title, items }) {
   )
 }
 
+function ReviewBadge({ mode, sourceQuality }) {
+  const isAiReview = mode === 'AI manager review'
+
+  return (
+    <div className={`score-review-badge ${isAiReview ? 'is-ai' : 'is-limited'}`}>
+      <CheckCircle2 aria-hidden="true" />
+      <div>
+        <strong>{isAiReview ? 'AI manager review' : 'Limited quick estimate'}</strong>
+        <span>{sourceQuality || 'Source detail unavailable'}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function PropertyScorePage({ navigate }) {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState('idle')
@@ -155,6 +169,8 @@ export default function PropertyScorePage({ navigate }) {
                   <small>out of 100</small>
                 </div>
 
+                <ReviewBadge mode={result.analysisMode} sourceQuality={result.sourceQuality} />
+
                 <div className="score-manager-note">
                   <span>Operator read</span>
                   <p>{result.managerSummary}</p>
@@ -164,6 +180,13 @@ export default function PropertyScorePage({ navigate }) {
                     </small>
                   )}
                 </div>
+
+                {result.visibleFacts?.length > 0 && (
+                  <div className="score-visible-facts">
+                    <h3>What the review could actually see</h3>
+                    <ul>{result.visibleFacts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+                  </div>
+                )}
 
                 <div className="score-meter-grid">
                   {Object.entries(result.categories).map(([key, value]) => (

@@ -9,6 +9,7 @@ const snapshotSchema = {
     'sourceNote',
     'analysisMode',
     'sourceQuality',
+    'visibleFacts',
     'managerSummary',
     'conversationMessage',
     'categories',
@@ -27,6 +28,7 @@ const snapshotSchema = {
     sourceNote: { type: 'string' },
     analysisMode: { type: 'string' },
     sourceQuality: { type: 'string' },
+    visibleFacts: { type: 'array', items: { type: 'string' } },
     managerSummary: { type: 'string' },
     conversationMessage: { type: 'string' },
     categories: {
@@ -104,8 +106,16 @@ async function fetchListingText(url) {
   }
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function hasPhrase(text, phrase) {
+  return new RegExp(`(^|[^a-z0-9])${escapeRegExp(phrase)}([^a-z0-9]|$)`, 'i').test(text)
+}
+
 function includesAny(text, words) {
-  return words.reduce((count, word) => count + (text.includes(word) ? 1 : 0), 0)
+  return words.reduce((count, word) => count + (hasPhrase(text, word) ? 1 : 0), 0)
 }
 
 function hasUsableListingText(fetched) {
@@ -129,17 +139,82 @@ function hasUsableListingText(fetched) {
   return text.length > 700 && includesAny(text, blockedSignals) === 0 && includesAny(text, propertySignals) >= 2
 }
 
+function getAnalysisSource(payload, fetched = null) {
+  const title = fetched?.metadata?.title || ''
+  const description = fetched?.metadata?.description || ''
+  const visibleText = fetched?.visibleText || ''
+  const sourceHost = (() => {
+    try {
+      return payload.listingUrl ? new URL(payload.listingUrl).hostname : ''
+    } catch {
+      return ''
+    }
+  })()
+
+  const isMarketplace = /airbnb|vrbo|booking|expedia/i.test(sourceHost)
+  const marketplaceText = [title, description].filter(Boolean).join(' ')
+
+  // Marketplace pages often expose noisy app-shell text. Use metadata first so
+  // fallback reports do not invent amenities from unrelated platform markup.
+  if (isMarketplace && marketplaceText.length > 24) {
+    return {
+      text: marketplaceText.toLowerCase(),
+      limited: true,
+      quality: 'Public marketplace metadata only',
+    }
+  }
+
+  return {
+    text: `${payload.listingUrl || ''} ${payload.details || ''} ${title} ${description} ${visibleText}`.toLowerCase(),
+    limited: false,
+    quality: fetched ? 'Accessible public listing text' : 'Submitted URL/details',
+  }
+}
+
+function visibleFactsFromText(text, limited = false) {
+  const facts = []
+  const titleMatch = text.match(/([^|]{8,90})\s*\|\s*([^|]{3,70})/)
+  const guestMatch = text.match(/(\d+\+?\s*guests?)/i)
+  const bedroomMatch = text.match(/(\d+\s*bedrooms?)/i)
+  const bedMatch = text.match(/(\d+\s*beds?)/i)
+  const bathMatch = text.match(/(\d+(?:\.\d+)?\s*baths?)/i)
+  const reviewMatch = text.match(/(\d+(?:\.\d+)?\s*(?:stars?|rating)|\d+\s*reviews?)/i)
+
+  if (titleMatch?.[1]) facts.push(`Listing title signal: ${titleMatch[1].trim()}`)
+  if (guestMatch?.[1]) facts.push(`Capacity signal: ${guestMatch[1]}`)
+  if (bedroomMatch?.[1]) facts.push(`Bedroom signal: ${bedroomMatch[1]}`)
+  if (bedMatch?.[1]) facts.push(`Bed signal: ${bedMatch[1]}`)
+  if (bathMatch?.[1]) facts.push(`Bath signal: ${bathMatch[1]}`)
+  if (reviewMatch?.[1]) facts.push(`Trust signal: ${reviewMatch[1]}`)
+  if (hasPhrase(text, 'golf')) facts.push('Destination signal: golf')
+  if (hasPhrase(text, 'ski')) facts.push('Destination signal: ski')
+  if (hasPhrase(text, 'schuss village')) facts.push('Location signal: Schuss Village')
+  if (hasPhrase(text, 'shanty creek')) facts.push('Location signal: Shanty Creek')
+  if (hasPhrase(text, 'forest') || hasPhrase(text, 'woods') || hasPhrase(text, 'wooded')) facts.push('Setting signal: wooded/private outdoor setting')
+  if (limited) facts.push('Limited access note: marketplace pages may hide full amenities and photo details from automated review')
+
+  return [...new Set(facts)].slice(0, 8)
+}
+
 function listSignals(combined) {
   const signals = [
     ['hot tub', 'hot tub'],
-    ['pool', 'pool'],
-    ['lake', 'lake access or lake positioning'],
+    ['swimming pool', 'pool'],
+    ['pool access', 'pool access'],
+    ['lakefront', 'lakefront positioning'],
+    ['lake access', 'lake access'],
     ['beach', 'beach proximity'],
     ['fire pit', 'fire pit'],
     ['game room', 'game room'],
     ['deck', 'deck or outdoor gathering space'],
     ['grill', 'grill'],
     ['sauna', 'sauna'],
+    ['golf', 'golf destination appeal'],
+    ['ski', 'ski-season appeal'],
+    ['forest', 'wooded privacy'],
+    ['woods', 'wooded privacy'],
+    ['16+ guests', 'large-group capacity'],
+    ['5 bedrooms', 'large sleeping capacity'],
     ['walkable', 'walkability'],
     ['pet', 'pet-friendly potential'],
     ['downtown', 'downtown proximity'],
@@ -152,13 +227,17 @@ function listSignals(combined) {
 
 function pickFallbackInsights(combined, signals) {
   const hasHotTub = combined.includes('hot tub')
-  const hasPool = combined.includes('pool')
-  const hasLakeOrBeach = combined.includes('lake') || combined.includes('beach')
-  const hasWalkable = combined.includes('walkable') || combined.includes('downtown')
-  const hasPets = combined.includes('pet')
-  const hasReviews = combined.includes('review') || combined.includes('rating') || combined.includes('superhost')
-  const hasPhotos = combined.includes('photo') || combined.includes('gallery') || combined.includes('tour')
-  const hasFamily = combined.includes('family') || combined.includes('sleeps') || combined.includes('bedroom')
+  const hasPool = hasPhrase(combined, 'swimming pool') || hasPhrase(combined, 'pool access')
+  const hasLakeOrBeach = hasPhrase(combined, 'lakefront') || hasPhrase(combined, 'lake access') || hasPhrase(combined, 'beach')
+  const hasGolf = hasPhrase(combined, 'golf')
+  const hasSki = hasPhrase(combined, 'ski')
+  const hasWooded = hasPhrase(combined, 'forest') || hasPhrase(combined, 'woods') || hasPhrase(combined, 'wooded')
+  const hasLargeGroup = hasPhrase(combined, '16+ guests') || hasPhrase(combined, '5 bedrooms') || hasPhrase(combined, 'group')
+  const hasWalkable = hasPhrase(combined, 'walkable') || hasPhrase(combined, 'downtown')
+  const hasPets = hasPhrase(combined, 'pet')
+  const hasReviews = hasPhrase(combined, 'review') || hasPhrase(combined, 'rating') || hasPhrase(combined, 'guest favourite') || hasPhrase(combined, 'guest favorite') || hasPhrase(combined, 'superhost')
+  const hasPhotos = hasPhrase(combined, 'photo') || hasPhrase(combined, 'gallery') || hasPhrase(combined, 'tour')
+  const hasFamily = hasPhrase(combined, 'family') || hasPhrase(combined, 'sleeps') || hasPhrase(combined, 'bedroom') || hasLargeGroup
 
   return {
     managerSummary: signals.length
@@ -167,6 +246,10 @@ function pickFallbackInsights(combined, signals) {
     topTakeaways: [
       hasLakeOrBeach
         ? 'Lead with the water or destination lifestyle immediately; that is likely the emotional hook.'
+        : hasGolf || hasSki
+          ? 'Lead with the golf/ski trip use case immediately; guests should understand the seasonal reason to book before they scan amenities.'
+          : hasWooded
+            ? 'Lead with the private wooded getaway feeling and make the outdoor gathering setup easy to understand.'
         : 'Lead with the strongest guest use case in the first screen: family trip, weekend escape, group stay, or work-friendly retreat.',
       hasReviews
         ? 'Existing review/rating signals should be used as trust proof, but the listing still needs a clear reason to choose it.'
@@ -179,6 +262,11 @@ function pickFallbackInsights(combined, signals) {
       hasFamily
         ? 'Make sleeping layout, gathering spaces, parking, and kid/family convenience obvious before guests have to hunt for details.'
         : 'Clarify exactly who this stay is perfect for and make that guest type feel seen in the first few lines.',
+      hasGolf || hasSki
+        ? 'Build the opening copy around practical trip planning: distance to golf, ski access, parking, gear storage, and apres-stay gathering space.'
+        : hasWooded
+          ? 'Use the wooded setting as a privacy and escape angle, then support it with clear outdoor photos and arrival details.'
+          : 'Make the first five photos feel like a complete reason to book, not just a tour of rooms.',
       hasWalkable
         ? 'If the property is walkable or close to downtown, quantify that advantage with nearby attractions and time-to-destination details.'
         : 'If location is not the main hook, lean harder into comfort, amenities, privacy, and easy arrival.',
@@ -189,6 +277,8 @@ function pickFallbackInsights(combined, signals) {
         : 'Review minimum stays, weekend premiums, shoulder-season offers, and gap-night strategy.',
       hasLakeOrBeach
         ? 'Build pricing around seasonal demand windows and weather-dependent booking behavior.'
+        : hasGolf || hasSki
+          ? 'Build pricing around golf weekends, ski periods, holiday breaks, and shoulder-season event demand.'
         : 'Use listing quality and amenity positioning to support rate confidence before chasing occupancy.',
     ],
     operationalWatchouts: [
@@ -205,6 +295,10 @@ function pickFallbackInsights(combined, signals) {
         : 'Photo quality and photo order need review; the listing should show the reason to book before details.',
       hasLakeOrBeach
         ? 'Water/destination positioning should be repeated in title, intro copy, photo order, and amenity descriptions.'
+        : hasGolf || hasSki
+          ? 'Golf and ski positioning should be repeated in the title, first paragraph, first photos, and nearby-attraction details.'
+          : hasWooded
+            ? 'The outdoor/wooded setting can be merchandised more clearly with stronger first-photo sequencing and simple amenity storytelling.'
         : 'The listing may need a more memorable hook that separates it from comparable homes nearby.',
       'Direct-booking and professional management value can be clearer without sounding corporate.',
     ],
@@ -249,25 +343,27 @@ function normalizeSnapshot(result, fallback) {
 }
 
 function analyze(payload, fetched = null) {
-  const combined = `${payload.listingUrl || ''} ${payload.details || ''} ${fetched?.metadata?.title || ''} ${fetched?.metadata?.description || ''} ${fetched?.visibleText || ''}`.toLowerCase()
-  const amenityHits = includesAny(combined, ['hot tub', 'pool', 'lake', 'beach', 'fire pit', 'game room', 'deck', 'grill', 'sauna', 'walkable'])
+  const source = getAnalysisSource(payload, fetched)
+  const combined = source.text
+  const amenityHits = includesAny(combined, ['hot tub', 'swimming pool', 'pool access', 'lakefront', 'lake access', 'beach', 'fire pit', 'game room', 'deck', 'grill', 'sauna', 'walkable'])
   const qualityHits = includesAny(combined, ['renovated', 'luxury', 'updated', 'new', 'view', 'family', 'downtown', 'private'])
-  const complexityHits = includesAny(combined, ['pool', 'hot tub', 'large', 'multi', 'shared', 'hoa', 'remote', 'pets'])
-  const listingHits = includesAny(combined, ['superhost', 'reviews', 'rating', 'guest favorite', 'booking', 'direct'])
+  const destinationHits = includesAny(combined, ['golf', 'ski', 'forest', 'woods', 'wooded', 'schuss village', 'shanty creek'])
+  const complexityHits = includesAny(combined, ['swimming pool', 'pool access', 'hot tub', 'large', '16+ guests', 'multi', 'shared', 'hoa', 'remote', 'pets'])
+  const listingHits = includesAny(combined, ['superhost', 'reviews', 'rating', 'guest favorite', 'guest favourite', 'booking', 'direct'])
   const photoHits = includesAny(combined, ['photo', 'photos', 'gallery', 'professional', 'tour', 'bright'])
   const signals = listSignals(combined)
   const insights = pickFallbackInsights(combined, signals)
 
   const categories = {
-    guestAppeal: clamp(70 + amenityHits * 3 + qualityHits * 2),
+    guestAppeal: clamp(70 + amenityHits * 3 + qualityHits * 2 + destinationHits * 2),
     amenityStrength: clamp(64 + amenityHits * 4),
-    listingQuality: clamp(62 + listingHits * 4 + qualityHits * 2),
+    listingQuality: clamp(62 + listingHits * 4 + qualityHits * 2 + destinationHits * 2),
     photoQuality: clamp(62 + photoHits * 5),
     operationalComplexity: clamp(48 + complexityHits * 5),
-    revenueUpsideIndicators: clamp(68 + amenityHits * 2 + qualityHits * 3 + listingHits * 2),
+    revenueUpsideIndicators: clamp(68 + amenityHits * 2 + qualityHits * 3 + listingHits * 2 + destinationHits * 3),
   }
 
-  const score = clamp(
+  const rawScore = clamp(
     (categories.guestAppeal +
       categories.amenityStrength +
       categories.listingQuality +
@@ -276,15 +372,19 @@ function analyze(payload, fetched = null) {
       categories.operationalComplexity * 0.35) /
       4.65,
   )
+  const score = source.limited ? Math.min(rawScore, 82) : rawScore
 
   return {
     score,
     sourceNote: fetched
-      ? `Quick estimate based on accessible listing text. Detected signals: ${signals.slice(0, 5).join(', ') || 'limited public details'}.`
+      ? `Quick estimate based on public listing metadata. Detected signals: ${signals.slice(0, 5).join(', ') || 'limited public details'}.`
       : 'Quick estimate based on submitted details.',
     analysisMode: 'Quick estimate',
-    sourceQuality: fetched ? 'Public listing text' : 'Manual/submitted details',
-    managerSummary: insights.managerSummary,
+    sourceQuality: source.quality,
+    visibleFacts: visibleFactsFromText(combined, source.limited),
+    managerSummary: source.limited
+      ? `${insights.managerSummary} This is a limited read because the marketplace page did not expose full listing copy, amenities, and photo context to the automated review.`
+      : insights.managerSummary,
     conversationMessage:
       signals.length
         ? `If I were reviewing this as an operator, I would pressure-test whether ${signals[0]} is clearly visible in the first photos, title, opening copy, and guest instructions.`
@@ -322,6 +422,8 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
     payload.details ? `Owner details: ${payload.details}` : '',
     fetched?.metadata?.title ? `Page title: ${fetched.metadata.title}` : '',
     fetched?.metadata?.description ? `Page description: ${fetched.metadata.description}` : '',
+    fallback.visibleFacts?.length ? `Visible facts extracted by system: ${fallback.visibleFacts.join('; ')}` : '',
+    fallback.sourceQuality ? `Source quality: ${fallback.sourceQuality}` : '',
     fetched?.visibleText ? `Visible listing text: ${fetched.visibleText.slice(0, 9000)}` : '',
   ]
     .filter(Boolean)
@@ -340,7 +442,7 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
         {
           role: 'system',
           content:
-            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed.',
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. visibleFacts must list only facts directly visible in the provided context.',
         },
         {
           role: 'user',

@@ -2355,13 +2355,50 @@ p {
 
 .score-manager-note,
 .score-takeaways,
-.score-steps {
+.score-steps,
+.score-review-badge,
+.score-visible-facts {
   border: 1px solid rgba(158, 231, 255, 0.14);
   border-radius: var(--radius);
   background:
     linear-gradient(135deg, rgba(88, 199, 255, 0.09), rgba(216, 173, 104, 0.06)),
     rgba(255, 255, 255, 0.055);
   padding: 1rem;
+}
+
+.score-review-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.score-review-badge svg {
+  flex: 0 0 auto;
+  color: var(--glowblue);
+}
+
+.score-review-badge.is-ai {
+  border-color: rgba(88, 199, 255, 0.28);
+  background:
+    linear-gradient(135deg, rgba(88, 199, 255, 0.15), rgba(216, 173, 104, 0.08)),
+    rgba(255, 255, 255, 0.065);
+}
+
+.score-review-badge.is-limited {
+  border-color: rgba(216, 173, 104, 0.26);
+}
+
+.score-review-badge strong,
+.score-visible-facts h3 {
+  display: block;
+  color: #fff;
+}
+
+.score-review-badge span {
+  display: block;
+  margin-top: 0.15rem;
+  color: #aac3d8;
+  font-size: 0.82rem;
 }
 
 .score-manager-note span {
@@ -2384,8 +2421,31 @@ p {
 
 .score-manager-note p,
 .score-takeaways li,
-.score-steps li {
+.score-steps li,
+.score-visible-facts li {
   color: #d8e8f8;
+}
+
+.score-visible-facts {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.score-visible-facts ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.score-visible-facts li {
+  border: 1px solid rgba(158, 231, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  font-size: 0.78rem;
+  padding: 0.42rem 0.62rem;
 }
 
 .score-meter-grid {
