@@ -1,4 +1,3 @@
-const NOTIFICATION_EMAIL = 'superfaststays@gmail.com'
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 
 const snapshotSchema = {
@@ -477,25 +476,6 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
   return normalizeSnapshot(JSON.parse(text), fallback)
 }
 
-async function notifyLead(payload, result) {
-  const endpoint = process.env.STAYDOG_LEAD_ENDPOINT || process.env.VITE_STAYDOG_LEAD_ENDPOINT
-  if (!endpoint) return { stored: false }
-
-  await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...payload,
-      result,
-      source: 'StayDog Property Potential Score',
-      notify: NOTIFICATION_EMAIL,
-      submittedAt: new Date().toISOString(),
-    }),
-  })
-
-  return { stored: true }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
@@ -537,13 +517,9 @@ export default async function handler(req, res) {
       result = fallback
     }
 
-    const storage = await notifyLead(payload, result)
-
     res.status(200).json({
-      status: storage.stored ? 'submitted' : 'staged',
-      message: storage.stored
-        ? 'Your StayDog snapshot is ready, and the details were sent for follow-up.'
-        : 'Your StayDog snapshot is ready. Add contact automation later to send results to Google Sheets and email.',
+      status: 'ready',
+      message: 'Your StayDog snapshot is ready. To speak with StayDog, continue to Partner With Us.',
       result,
     })
   } catch (error) {

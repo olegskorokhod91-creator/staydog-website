@@ -1,6 +1,4 @@
 const SCORE_ENDPOINT = import.meta.env.VITE_STAYDOG_SCORE_ENDPOINT || '/api/property-potential'
-const NOTIFICATION_EMAIL = 'superfaststays@gmail.com'
-
 const defaultAreas = {
   guestAppeal: 72,
   amenityStrength: 68,
@@ -220,7 +218,6 @@ export async function submitPropertyScore(payload) {
   const normalizedPayload = {
     ...payload,
     source: 'StayDog Property Potential Score',
-    notify: NOTIFICATION_EMAIL,
     submittedAt: new Date().toISOString(),
   }
 
@@ -241,13 +238,13 @@ export async function submitPropertyScore(payload) {
       }
     }
 
-    const result = createLocalSnapshot(normalizedPayload, 'Generated locally from the details provided. Connect the score endpoint for live URL fetching and Google Sheets/email delivery.')
+    const result = createLocalSnapshot(normalizedPayload, 'Generated locally from the details provided. Connect the score endpoint for live URL fetching.')
     const staged = { ...normalizedPayload, result }
     localStorage.setItem('staydog:last-property-score', JSON.stringify(staged))
 
     return {
       status: 'staged',
-      message: 'Your StayDog snapshot is ready. Add contact automation later to send results to Google Sheets and email.',
+      message: 'Your StayDog snapshot is ready. To speak with StayDog, continue to Partner With Us.',
       result,
     }
   }
