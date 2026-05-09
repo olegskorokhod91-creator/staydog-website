@@ -9,7 +9,7 @@ export default function Footer({ navigate }) {
           <span className="brand-mark">SD</span>
           <div>
             <strong>StayDog Rentals</strong>
-            <p>Sit Back. StayDog Handles It.</p>
+            <p>Sit Back. Let StayDog Handle It.</p>
           </div>
         </div>
 

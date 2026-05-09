@@ -2850,16 +2850,24 @@ p {
   }
 
   .hero-title-lockup {
-    gap: 0.85rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 0.9rem;
+    row-gap: 0;
   }
 
   .hero-title-lockup h1 {
-    font-size: clamp(2.75rem, 13vw, 4.2rem);
-    line-height: 0.94;
+    grid-column: 1;
+    grid-row: 1;
+    font-size: clamp(2.5rem, 11.6vw, 3.6rem);
+    line-height: 0.95;
   }
 
   .hero-logo-showcase {
-    width: 92px;
+    grid-column: 2;
+    grid-row: 1;
+    width: clamp(74px, 21vw, 92px);
+    margin-top: 0.18rem;
   }
 
   .hero-subcopy {
@@ -2869,6 +2877,13 @@ p {
 
   .platform-row {
     gap: 0.45rem;
+    width: 100%;
+    margin: 0.15rem 0 0.6rem;
+    padding: 0.62rem;
+  }
+
+  .platform-row strong {
+    flex-basis: 100%;
   }
 
   .platform-row span {
@@ -2880,7 +2895,8 @@ p {
   .hero-visual {
     display: grid;
     min-height: auto;
-    gap: 0.9rem;
+    gap: 1rem;
+    margin-top: 0.2rem;
   }
 
   .hero-visual::before {
@@ -2894,8 +2910,11 @@ p {
     top: auto;
     right: auto;
     z-index: 4;
-    justify-self: start;
+    width: 100%;
+    justify-content: center;
+    justify-self: stretch;
     font-size: 0.72rem;
+    margin-bottom: 0.15rem;
   }
 
   .hero-property-gallery {
@@ -2958,6 +2977,47 @@ p {
   .proof-ledger span {
     font-size: 0.66rem;
     letter-spacing: 0.12em;
+  }
+
+  .signature-section {
+    padding: 78px 0 92px;
+  }
+
+  .signature-copy {
+    gap: 1rem;
+  }
+
+  .signature-copy h2 {
+    font-size: clamp(2.55rem, 13vw, 4rem);
+    line-height: 0.96;
+  }
+
+  .signature-badge {
+    align-items: flex-start;
+    padding: 0.9rem;
+  }
+
+  .signature-feature {
+    grid-template-rows: auto auto;
+    overflow: hidden;
+  }
+
+  .signature-feature img {
+    width: 100%;
+    height: clamp(260px, 64vw, 340px);
+    min-height: 0;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  .signature-feature > div {
+    gap: 0.7rem;
+    padding: 1.15rem;
+  }
+
+  .signature-feature h3 {
+    font-size: clamp(1.9rem, 8.2vw, 2.7rem);
+    line-height: 1.04;
   }
 
   .hero-actions,

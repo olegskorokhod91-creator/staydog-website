@@ -62,7 +62,7 @@ export default function App() {
       ? 'Partner With StayDog | StayDog Rentals'
       : isScorePage
         ? 'Property Potential Score | StayDog Rentals'
-        : 'StayDog Rentals | Sit Back. StayDog Handles It.'
+        : 'StayDog Rentals | Sit Back. Let StayDog Handle It.'
   }, [isPartnerPage, isScorePage])
 
   useEffect(() => {
