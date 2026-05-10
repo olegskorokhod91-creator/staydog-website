@@ -119,6 +119,138 @@ function includesAny(text, words) {
   return words.reduce((count, word) => count + (hasPhrase(text, word) ? 1 : 0), 0)
 }
 
+function getUrlParts(url = '') {
+  try {
+    const parsed = new URL(url)
+    return {
+      host: parsed.hostname.replace(/^www\./, '').toLowerCase(),
+      path: parsed.pathname.toLowerCase(),
+    }
+  } catch {
+    return { host: '', path: '' }
+  }
+}
+
+function isKnownPropertyHost(host = '') {
+  return [
+    'airbnb.',
+    'vrbo.',
+    'booking.',
+    'expedia.',
+    'zillow.',
+    'realtor.',
+    'redfin.',
+    'properties.staydogrentals.com',
+    'ownerrez.',
+    'lodgify.',
+    'hostaway.',
+    'guesty.',
+    'direct-book.',
+  ].some((needle) => host.includes(needle))
+}
+
+function isKnownNonPropertyHost(host = '') {
+  return [
+    'facebook.com',
+    'instagram.com',
+    'tiktok.com',
+    'linkedin.com',
+    'youtube.com',
+    'x.com',
+    'twitter.com',
+    'amazon.',
+    'ebay.',
+    'etsy.',
+    'walmart.',
+    'target.',
+    'bestbuy.',
+    'nike.',
+    'adidas.',
+    'zappos.',
+    'wayfair.',
+  ].some((needle) => host.includes(needle))
+}
+
+function assessPropertyUrl(payload, fetched = null) {
+  const { host, path } = getUrlParts(payload.listingUrl)
+  const context = `${host} ${path} ${fetched?.metadata?.title || ''} ${fetched?.metadata?.description || ''} ${fetched?.visibleText || ''}`.toLowerCase()
+  const knownPropertyHost = isKnownPropertyHost(host)
+
+  if (knownPropertyHost) {
+    return { ok: true, reason: 'recognized property/listing platform' }
+  }
+
+  const propertySignals = [
+    'bedroom',
+    'bath',
+    'guest',
+    'sleeps',
+    'entire home',
+    'entire house',
+    'vacation rental',
+    'short term rental',
+    'short-term rental',
+    'airbnb',
+    'vrbo',
+    'booking.com',
+    'listing',
+    'amenity',
+    'check-in',
+    'checkout',
+    'night',
+    'hosted by',
+    'host',
+    'property',
+    'rental',
+    'cabin',
+    'condo',
+    'cottage',
+    'lodge',
+    'villa',
+  ]
+  const nonPropertySignals = [
+    'add to cart',
+    'buy now',
+    'shoe',
+    'sneaker',
+    'shirt',
+    'pants',
+    'product details',
+    'shipping',
+    'returns',
+    'followers',
+    'profile',
+    'timeline',
+    'posts',
+    'reels',
+    'watch video',
+    'subscribe',
+  ]
+  const propertyScore = includesAny(context, propertySignals)
+  const nonPropertyScore = includesAny(context, nonPropertySignals)
+  const likelySocialOrStore = isKnownNonPropertyHost(host)
+
+  if (likelySocialOrStore && propertyScore < 2) {
+    return {
+      ok: false,
+      reason: 'known non-property website',
+      message:
+        'That link looks like it belongs to a social profile, store, product page, or other non-property page. Please paste a public vacation rental listing URL from Airbnb, Vrbo, Booking.com, Expedia, Zillow, or a direct booking page.',
+    }
+  }
+
+  if (fetched && nonPropertyScore >= 2 && propertyScore < 2) {
+    return {
+      ok: false,
+      reason: 'content does not look like a lodging listing',
+      message:
+        'That page does not look like a vacation rental listing. Please paste a public property/listing URL so StayDog can review the right kind of page.',
+    }
+  }
+
+  return { ok: true, reason: 'not enough evidence to reject' }
+}
+
 function hasUsableListingText(fetched) {
   const text = `${fetched?.metadata?.title || ''} ${fetched?.metadata?.description || ''} ${fetched?.visibleText || ''}`.toLowerCase()
   const blockedSignals = ['enable javascript', 'access denied', 'captcha', 'robot', 'blocked', 'verify you are human']
@@ -487,8 +619,26 @@ export default async function handler(req, res) {
     let fetched = null
 
     if (payload.mode === 'url' && payload.listingUrl) {
+      const preflight = assessPropertyUrl(payload)
+      if (!preflight.ok) {
+        res.status(200).json({
+          status: 'unsupported-url',
+          message: preflight.message,
+        })
+        return
+      }
+
       try {
         fetched = await fetchListingText(payload.listingUrl)
+        const contentCheck = assessPropertyUrl(payload, fetched)
+        if (!contentCheck.ok) {
+          res.status(200).json({
+            status: 'unsupported-url',
+            message: contentCheck.message,
+          })
+          return
+        }
+
         if (!hasUsableListingText(fetched) && !payload.details) {
           res.status(200).json({
             status: 'fallback-required',

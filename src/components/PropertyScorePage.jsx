@@ -121,7 +121,7 @@ export default function PropertyScorePage({ navigate }) {
               <Link2 aria-hidden="true" />
               <div>
                 <span>Paste a public listing URL</span>
-                <p>Airbnb, VRBO, Booking.com, Expedia, Zillow, or your direct booking page.</p>
+                <p>Airbnb, VRBO, Booking.com, Expedia, Zillow, or a direct booking page. Non-property links are filtered out.</p>
               </div>
             </div>
 
@@ -158,7 +158,7 @@ export default function PropertyScorePage({ navigate }) {
                 <h2>Property Potential Snapshot</h2>
                 <p>
                   Paste a public listing URL. If the page blocks access, StayDog can still review the property after you
-                  continue to Partner With Us.
+                  continue to Partner With Us. Links that clearly are not property listings will be rejected.
                 </p>
               </div>
             ) : (

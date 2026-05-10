@@ -51,6 +51,41 @@ function listSignals(text) {
     .map(([, label]) => label)
 }
 
+function getUrlHost(url = '') {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').toLowerCase()
+  } catch {
+    return ''
+  }
+}
+
+function isKnownNonPropertyHost(host = '') {
+  return [
+    'facebook.com',
+    'instagram.com',
+    'tiktok.com',
+    'linkedin.com',
+    'youtube.com',
+    'x.com',
+    'twitter.com',
+    'amazon.',
+    'ebay.',
+    'etsy.',
+    'walmart.',
+    'target.',
+    'bestbuy.',
+    'nike.',
+    'adidas.',
+    'zappos.',
+    'wayfair.',
+  ].some((needle) => host.includes(needle))
+}
+
+function looksLikeObviousNonPropertyUrl(url = '') {
+  const host = getUrlHost(url)
+  return host && isKnownNonPropertyHost(host)
+}
+
 function fallbackInsights(text, signals) {
   const hasHotTub = text.includes('hot tub')
   const hasPool = hasPhrase(text, 'swimming pool') || hasPhrase(text, 'pool access')
@@ -215,6 +250,14 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
 }
 
 export async function submitPropertyScore(payload) {
+  if (payload.mode === 'url' && looksLikeObviousNonPropertyUrl(payload.listingUrl)) {
+    return {
+      status: 'unsupported-url',
+      message:
+        'That link looks like it belongs to a social profile, store, product page, or other non-property page. Please paste a public vacation rental listing URL from Airbnb, Vrbo, Booking.com, Expedia, Zillow, or a direct booking page.',
+    }
+  }
+
   const normalizedPayload = {
     ...payload,
     source: 'StayDog Property Potential Score',
