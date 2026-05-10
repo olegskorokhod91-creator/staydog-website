@@ -9,8 +9,11 @@ import OwnerConversionBand from './components/OwnerConversionBand'
 import PartnerFunnel from './components/PartnerFunnel'
 import PropertyScorePage from './components/PropertyScorePage'
 import PropertyScoreSection from './components/PropertyScoreSection'
+import SeoLandingPage from './components/SeoLandingPage'
 import SignatureHospitalitySection from './components/SignatureHospitalitySection'
+import { seoPageMap } from './data/seoPages'
 import { usePageAnimations } from './hooks/usePageAnimations'
+import { applyRouteSeo } from './utils/seo'
 
 function useRoute() {
   const [route, setRoute] = useState(() => ({
@@ -53,27 +56,72 @@ export default function App() {
   const scopeRef = useRef(null)
   const isPartnerPage = route.path === '/partner-with-us'
   const isScorePage = route.path === '/property-potential-score'
+  const seoPage = seoPageMap[route.path]
   const routeKey = `${route.path}${route.hash}`
 
   usePageAnimations(scopeRef, routeKey)
 
   useEffect(() => {
-    document.title = isPartnerPage
-      ? 'Partner With StayDog | StayDog Rentals'
-      : isScorePage
-        ? 'Property Potential Score | StayDog Rentals'
-        : 'StayDog Rentals | Sit Back. Let StayDog Handle It.'
-  }, [isPartnerPage, isScorePage])
+    if (seoPage) {
+      applyRouteSeo({
+        title: seoPage.metaTitle,
+        description: seoPage.description,
+        path: seoPage.path,
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: seoPage.eyebrow,
+          provider: {
+            '@type': 'LocalBusiness',
+            name: 'StayDog Rentals',
+            email: 'superfaststays@gmail.com',
+            telephone: '+1-248-382-8370',
+          },
+          areaServed: seoPage.market,
+          description: seoPage.description,
+          url: `${window.location.origin}${seoPage.path}`,
+        },
+      })
+      return
+    }
+
+    if (isPartnerPage) {
+      applyRouteSeo({
+        title: 'Partner With StayDog | StayDog Rentals',
+        description:
+          'Tell StayDog Rentals about your vacation rental and request a human review for full-service vacation rental management.',
+        path: '/partner-with-us',
+      })
+      return
+    }
+
+    if (isScorePage) {
+      applyRouteSeo({
+        title: 'Property Potential Score | StayDog Rentals',
+        description:
+          'Paste a vacation rental listing URL and get an AI-assisted StayDog Property Potential Score with guest appeal, amenity, listing quality, and improvement notes.',
+        path: '/property-potential-score',
+      })
+      return
+    }
+
+    applyRouteSeo({
+      title: 'StayDog Rentals | Sit Back. Let StayDog Handle It.',
+      description:
+        'StayDog Rentals provides premium vacation rental management powered by hospitality expertise, automation-first operations, revenue optimization, and 24/7 guest care.',
+      path: '/',
+    })
+  }, [isPartnerPage, isScorePage, seoPage])
 
   useEffect(() => {
-    if (route.hash && !isPartnerPage && !isScorePage) {
+    if (route.hash && !isPartnerPage && !isScorePage && !seoPage) {
       requestAnimationFrame(() => {
         document.querySelector(route.hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     } else {
       window.scrollTo({ top: 0, behavior: 'auto' })
     }
-  }, [route.hash, route.path, isPartnerPage, isScorePage])
+  }, [route.hash, route.path, isPartnerPage, isScorePage, seoPage])
 
   return (
     <div ref={scopeRef} className="app-frame">
@@ -82,6 +130,8 @@ export default function App() {
         <PartnerFunnel navigate={navigate} />
       ) : isScorePage ? (
         <PropertyScorePage navigate={navigate} />
+      ) : seoPage ? (
+        <SeoLandingPage page={seoPage} navigate={navigate} />
       ) : (
         <HomePage navigate={navigate} />
       )}

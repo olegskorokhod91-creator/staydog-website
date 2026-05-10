@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/vacation-rental-management", "destination": "/index.html" },
+    { "source": "/airbnb-management", "destination": "/index.html" },
+    { "source": "/short-term-rental-management", "destination": "/index.html" },
+    { "source": "/vacation-rental-management-michigan", "destination": "/index.html" },
+    { "source": "/vacation-rental-management-indiana", "destination": "/index.html" },
+    { "source": "/vacation-rental-management-illinois", "destination": "/index.html" },
+    { "source": "/property-potential-score", "destination": "/index.html" },
+    { "source": "/partner-with-us", "destination": "/index.html" }
+  ]
+}

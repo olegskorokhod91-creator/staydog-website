@@ -15,6 +15,9 @@ export default function Footer({ navigate }) {
 
         <div className="footer-links" data-reveal>
           <button type="button" onClick={() => navigate('/', '#owners')}>For Owners</button>
+          <button type="button" onClick={() => navigate('/vacation-rental-management')}>Management Services</button>
+          <button type="button" onClick={() => navigate('/airbnb-management')}>Airbnb Management</button>
+          <button type="button" onClick={() => navigate('/vacation-rental-management-michigan')}>Michigan Management</button>
           <button type="button" onClick={() => navigate('/', '#homes')}>Explore Homes</button>
           <button type="button" onClick={() => navigate('/', '#signature')}>Signature Collection</button>
           <button type="button" onClick={() => navigate('/property-potential-score')}>Property Score</button>
