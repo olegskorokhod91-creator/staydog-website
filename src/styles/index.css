@@ -2357,7 +2357,8 @@ p {
 .score-takeaways,
 .score-steps,
 .score-review-badge,
-.score-visible-facts {
+.score-visible-facts,
+.score-standards {
   border: 1px solid rgba(158, 231, 255, 0.14);
   border-radius: var(--radius);
   background:
@@ -2429,6 +2430,19 @@ p {
 .score-visible-facts {
   display: grid;
   gap: 0.65rem;
+}
+
+.score-missing-data {
+  border-color: rgba(216, 173, 104, 0.24);
+}
+
+.score-standards {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.score-standards h3 {
+  color: #fff;
 }
 
 .score-visible-facts ul {

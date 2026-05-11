@@ -51,6 +51,38 @@ function listSignals(text) {
     .map(([, label]) => label)
 }
 
+function detectPropertyType(text) {
+  if (hasPhrase(text, 'condo')) return 'Condo or resort-style unit'
+  if (hasPhrase(text, 'cabin')) return 'Cabin getaway'
+  if (hasPhrase(text, 'cottage')) return 'Cottage stay'
+  if (hasPhrase(text, 'lodge')) return 'Lodge or group retreat'
+  if (hasPhrase(text, 'villa')) return 'Villa-style vacation home'
+  if (hasPhrase(text, 'apartment')) return 'Apartment or urban stay'
+  if (hasPhrase(text, 'entire home') || hasPhrase(text, 'entire house') || hasPhrase(text, 'house')) return 'Whole-home vacation rental'
+  if (hasPhrase(text, 'room')) return 'Room-based lodging'
+  return 'Vacation rental listing'
+}
+
+function getMissingData(text) {
+  const missing = []
+  if (!hasPhrase(text, 'photo') && !hasPhrase(text, 'gallery') && !hasPhrase(text, 'tour')) {
+    missing.push('Photo quality and photo order could not be reviewed from the available text.')
+  }
+  if (!hasPhrase(text, 'review') && !hasPhrase(text, 'rating') && !hasPhrase(text, 'guest favorite') && !hasPhrase(text, 'guest favourite')) {
+    missing.push('Review themes and guest feedback were not clearly visible.')
+  }
+  if (!hasPhrase(text, 'bedroom') && !hasPhrase(text, 'bed') && !hasPhrase(text, 'bath')) {
+    missing.push('Bedroom, bed, and bathroom details were not clearly confirmed.')
+  }
+  if (!hasPhrase(text, 'amenity') && listSignals(text).length < 2) {
+    missing.push('Amenity depth was limited, so upgrade recommendations should be confirmed manually.')
+  }
+  if (!hasPhrase(text, 'price') && !hasPhrase(text, 'night') && !hasPhrase(text, 'rate')) {
+    missing.push('Pricing, minimum stays, and seasonality were not visible enough for deeper revenue guidance.')
+  }
+  return missing.slice(0, 5)
+}
+
 function getUrlHost(url = '') {
   try {
     return new URL(url).hostname.replace(/^www\./, '').toLowerCase()
@@ -202,6 +234,7 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
   const complexityHits = countMatches(body, ['swimming pool', 'pool access', 'hot tub', 'multi', 'large', 'remote', 'shared', 'hoa', 'older'])
   const photoHints = countMatches(body, ['photo', 'professional', 'bright', 'view', 'tour'])
   const signals = listSignals(body)
+  const listingHints = countMatches(body, ['superhost', 'reviews', 'rating', 'guest favorite', 'guest favourite', 'booking', 'direct'])
   const insights = fallbackInsights(body, signals)
 
   const guestAppeal = clamp(defaultAreas.guestAppeal + amenityHits * 3 + qualityHits * 2)
@@ -209,15 +242,33 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
   const listingQuality = clamp(defaultAreas.listingQuality + qualityHits * 3)
   const photoQuality = clamp(defaultAreas.photoQuality + photoHints * 4)
   const operationalComplexity = clamp(defaultAreas.operationalComplexity + complexityHits * 4)
-  const revenueUpsideIndicators = clamp(defaultAreas.revenueUpsideIndicators + amenityHits * 2 + qualityHits * 2)
-  const score = clamp((guestAppeal + amenityStrength + listingQuality + photoQuality + revenueUpsideIndicators - operationalComplexity * 0.35) / 4.65)
+  const revenueUpsideIndicators = clamp(defaultAreas.revenueUpsideIndicators + amenityHits * 2 + qualityHits * 2 + listingHints)
+  const stayDogReadiness = {
+    listingReadiness: clamp(listingQuality + listingHints * 2),
+    guestPromise: clamp(guestAppeal + qualityHits),
+    amenityDepth: amenityStrength,
+    operationsReadiness: clamp(78 - complexityHits * 4 + listingHints * 3 + qualityHits),
+    ownerUpside: revenueUpsideIndicators,
+    stayDogFit: clamp(70 + amenityHits * 2 + complexityHits * 2 + qualityHits),
+  }
+  const score = clamp(
+    guestAppeal * 0.25 +
+      listingQuality * 0.2 +
+      amenityStrength * 0.2 +
+      (100 - operationalComplexity) * 0.15 +
+      revenueUpsideIndicators * 0.1 +
+      stayDogReadiness.stayDogFit * 0.1,
+  )
 
   return {
     score,
     sourceNote,
     analysisMode: 'Quick estimate',
     sourceQuality: 'Browser fallback',
+    confidenceLevel: body.length > 200 ? 'Medium' : 'Limited',
+    propertyType: detectPropertyType(body),
     visibleFacts: visibleFactsFromText(body),
+    missingData: getMissingData(body),
     managerSummary: insights.managerSummary,
     conversationMessage:
       signals.length
@@ -232,6 +283,7 @@ export function createLocalSnapshot(payload, sourceNote = 'Generated from the de
       operationalComplexity,
       revenueUpsideIndicators,
     },
+    stayDogReadiness,
     topTakeaways: insights.topTakeaways,
     guestAppealNotes: insights.guestAppealNotes,
     revenueLevers: insights.revenueLevers,

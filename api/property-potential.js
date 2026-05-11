@@ -8,10 +8,14 @@ const snapshotSchema = {
     'sourceNote',
     'analysisMode',
     'sourceQuality',
+    'confidenceLevel',
+    'propertyType',
     'visibleFacts',
+    'missingData',
     'managerSummary',
     'conversationMessage',
     'categories',
+    'stayDogReadiness',
     'topTakeaways',
     'guestAppealNotes',
     'revenueLevers',
@@ -28,7 +32,10 @@ const snapshotSchema = {
     sourceNote: { type: 'string' },
     analysisMode: { type: 'string' },
     sourceQuality: { type: 'string' },
+    confidenceLevel: { type: 'string', enum: ['High', 'Medium', 'Limited'] },
+    propertyType: { type: 'string' },
     visibleFacts: { type: 'array', items: { type: 'string' } },
+    missingData: { type: 'array', items: { type: 'string' } },
     managerSummary: { type: 'string' },
     conversationMessage: { type: 'string' },
     categories: {
@@ -49,6 +56,26 @@ const snapshotSchema = {
         photoQuality: { type: 'number' },
         operationalComplexity: { type: 'number' },
         revenueUpsideIndicators: { type: 'number' },
+      },
+    },
+    stayDogReadiness: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'listingReadiness',
+        'guestPromise',
+        'amenityDepth',
+        'operationsReadiness',
+        'ownerUpside',
+        'stayDogFit',
+      ],
+      properties: {
+        listingReadiness: { type: 'number' },
+        guestPromise: { type: 'number' },
+        amenityDepth: { type: 'number' },
+        operationsReadiness: { type: 'number' },
+        ownerUpside: { type: 'number' },
+        stayDogFit: { type: 'number' },
       },
     },
     topTakeaways: { type: 'array', items: { type: 'string' } },
@@ -358,6 +385,52 @@ function listSignals(combined) {
   return signals.filter(([needle]) => combined.includes(needle)).map(([, label]) => label)
 }
 
+function detectPropertyType(text) {
+  if (hasPhrase(text, 'condo')) return 'Condo or resort-style unit'
+  if (hasPhrase(text, 'cabin')) return 'Cabin getaway'
+  if (hasPhrase(text, 'cottage')) return 'Cottage stay'
+  if (hasPhrase(text, 'lodge')) return 'Lodge or group retreat'
+  if (hasPhrase(text, 'villa')) return 'Villa-style vacation home'
+  if (hasPhrase(text, 'apartment')) return 'Apartment or urban stay'
+  if (hasPhrase(text, 'entire home') || hasPhrase(text, 'entire house') || hasPhrase(text, 'house')) {
+    return 'Whole-home vacation rental'
+  }
+  if (hasPhrase(text, 'room')) return 'Room-based lodging'
+  return 'Vacation rental listing'
+}
+
+function getConfidenceLevel(source, fetched, facts) {
+  if (source.limited) return 'Medium'
+  if (fetched && facts.length >= 4) return 'High'
+  if (fetched && facts.length >= 2) return 'Medium'
+  return 'Limited'
+}
+
+function getMissingData(text, source) {
+  const missing = []
+
+  if (source.limited) {
+    missing.push('Full listing copy and amenity details were not fully visible from the public page.')
+  }
+  if (!hasPhrase(text, 'photo') && !hasPhrase(text, 'gallery') && !hasPhrase(text, 'tour')) {
+    missing.push('Photo quality and photo order could not be reviewed from the available text.')
+  }
+  if (!hasPhrase(text, 'review') && !hasPhrase(text, 'rating') && !hasPhrase(text, 'guest favorite') && !hasPhrase(text, 'guest favourite')) {
+    missing.push('Review themes and guest feedback were not clearly visible.')
+  }
+  if (!hasPhrase(text, 'bedroom') && !hasPhrase(text, 'bed') && !hasPhrase(text, 'bath')) {
+    missing.push('Bedroom, bed, and bathroom details were not clearly confirmed.')
+  }
+  if (!hasPhrase(text, 'amenity') && listSignals(text).length < 2) {
+    missing.push('Amenity depth was limited, so upgrade recommendations should be confirmed manually.')
+  }
+  if (!hasPhrase(text, 'price') && !hasPhrase(text, 'night') && !hasPhrase(text, 'rate')) {
+    missing.push('Pricing, minimum stays, and seasonality were not visible enough for deeper revenue guidance.')
+  }
+
+  return missing.slice(0, 6)
+}
+
 function pickFallbackInsights(combined, signals) {
   const hasHotTub = combined.includes('hot tub')
   const hasPool = hasPhrase(combined, 'swimming pool') || hasPhrase(combined, 'pool access')
@@ -463,14 +536,22 @@ function normalizeSnapshot(result, fallback) {
     ...fallback.categories,
     ...(result.categories || {}),
   }
+  const stayDogReadiness = {
+    ...fallback.stayDogReadiness,
+    ...(result.stayDogReadiness || {}),
+  }
 
   return {
     ...fallback,
     ...result,
     score: cleanScore(result.score || fallback.score),
     categories: Object.fromEntries(Object.entries(categories).map(([key, value]) => [key, cleanScore(value)])),
+    stayDogReadiness: Object.fromEntries(Object.entries(stayDogReadiness).map(([key, value]) => [key, cleanScore(value)])),
     analysisMode: result.analysisMode || 'AI manager review',
     sourceQuality: result.sourceQuality || fallback.sourceQuality,
+    confidenceLevel: result.confidenceLevel || fallback.confidenceLevel,
+    propertyType: result.propertyType || fallback.propertyType,
+    missingData: Array.isArray(result.missingData) ? result.missingData : fallback.missingData,
     disclaimer: result.disclaimer || fallback.disclaimer,
   }
 }
@@ -485,6 +566,10 @@ function analyze(payload, fetched = null) {
   const listingHits = includesAny(combined, ['superhost', 'reviews', 'rating', 'guest favorite', 'guest favourite', 'booking', 'direct'])
   const photoHits = includesAny(combined, ['photo', 'photos', 'gallery', 'professional', 'tour', 'bright'])
   const signals = listSignals(combined)
+  const visibleFacts = visibleFactsFromText(combined, source.limited)
+  const confidenceLevel = getConfidenceLevel(source, fetched, visibleFacts)
+  const propertyType = detectPropertyType(combined)
+  const missingData = getMissingData(combined, source)
   const insights = pickFallbackInsights(combined, signals)
 
   const categories = {
@@ -496,14 +581,23 @@ function analyze(payload, fetched = null) {
     revenueUpsideIndicators: clamp(68 + amenityHits * 2 + qualityHits * 3 + listingHits * 2 + destinationHits * 3),
   }
 
+  const operationsReadiness = clamp(78 - complexityHits * 4 + listingHits * 3 + qualityHits)
+  const stayDogReadiness = {
+    listingReadiness: clamp(categories.listingQuality + listingHits * 2),
+    guestPromise: clamp(categories.guestAppeal + destinationHits * 2),
+    amenityDepth: categories.amenityStrength,
+    operationsReadiness,
+    ownerUpside: categories.revenueUpsideIndicators,
+    stayDogFit: clamp(70 + destinationHits * 3 + amenityHits * 2 + complexityHits * 2 + qualityHits),
+  }
+
   const rawScore = clamp(
-    (categories.guestAppeal +
-      categories.amenityStrength +
-      categories.listingQuality +
-      categories.photoQuality +
-      categories.revenueUpsideIndicators -
-      categories.operationalComplexity * 0.35) /
-      4.65,
+    categories.guestAppeal * 0.25 +
+      categories.listingQuality * 0.2 +
+      categories.amenityStrength * 0.2 +
+      (100 - categories.operationalComplexity) * 0.15 +
+      categories.revenueUpsideIndicators * 0.1 +
+      stayDogReadiness.stayDogFit * 0.1,
   )
   const score = source.limited ? Math.min(rawScore, 82) : rawScore
 
@@ -514,7 +608,10 @@ function analyze(payload, fetched = null) {
       : 'Quick estimate based on submitted details.',
     analysisMode: 'Quick estimate',
     sourceQuality: source.quality,
-    visibleFacts: visibleFactsFromText(combined, source.limited),
+    confidenceLevel,
+    propertyType,
+    visibleFacts,
+    missingData,
     managerSummary: source.limited
       ? `${insights.managerSummary} This is a limited read because the marketplace page did not expose full listing copy, amenities, and photo context to the automated review.`
       : insights.managerSummary,
@@ -524,6 +621,7 @@ function analyze(payload, fetched = null) {
         : 'If I were reviewing this as an operator, I would ask for the listing copy, first ten photos, amenity list, and current operating pain points before giving deeper advice.',
     disclaimer: 'Informational snapshot only. Revenue outcomes vary and require StayDog review.',
     categories,
+    stayDogReadiness,
     topTakeaways: insights.topTakeaways,
     guestAppealNotes: insights.guestAppealNotes,
     revenueLevers: insights.revenueLevers,
@@ -581,7 +679,7 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
         {
           role: 'system',
           content:
-            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. visibleFacts must list only facts directly visible in the provided context. recommendedImprovements must include 3-5 concrete, owner-friendly suggestions. stayDogFit must be 2-4 sentences explaining how StayDog can help operationally, not a generic one-liner. stayDogActionPlan must include 4 specific bullets: listing/positioning, pricing/revenue management, operations/guest care, and a final strategy-call item for more complex ideas.',
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. Set confidenceLevel to High only when full listing text, amenities, and enough facts are visible; Medium for useful metadata/partial detail; Limited when most details are unavailable. propertyType should identify the likely property type without overclaiming. missingData must list important unavailable inputs such as photos, reviews, amenities, pricing, bedroom/bath details, or seasonality. visibleFacts must list only facts directly visible in the provided context. stayDogReadiness should compare the property against StayDog management standards: listing readiness, guest promise, amenity depth, operations readiness, owner upside, and StayDog fit. recommendedImprovements must include 3-5 concrete, owner-friendly suggestions. stayDogFit must be 2-4 sentences explaining how StayDog can help operationally, not a generic one-liner. stayDogActionPlan must include 4 specific bullets: listing/positioning, pricing/revenue management, operations/guest care, and a final strategy-call item for more complex ideas.',
         },
         {
           role: 'user',

@@ -31,6 +31,15 @@ const labels = {
   revenueUpsideIndicators: 'Revenue Upside Indicators',
 }
 
+const readinessLabels = {
+  listingReadiness: 'Listing Readiness',
+  guestPromise: 'Guest Promise',
+  amenityDepth: 'Amenity Depth',
+  operationsReadiness: 'Operations Readiness',
+  ownerUpside: 'Owner Upside',
+  stayDogFit: 'StayDog Fit',
+}
+
 function ScoreMeter({ label, value }) {
   return (
     <div className="score-meter">
@@ -53,15 +62,15 @@ function InsightCard({ icon: Icon, title, items }) {
   )
 }
 
-function ReviewBadge({ mode, sourceQuality }) {
+function ReviewBadge({ mode, sourceQuality, confidenceLevel, propertyType }) {
   const isAiReview = mode === 'AI manager review'
 
   return (
     <div className={`score-review-badge ${isAiReview ? 'is-ai' : 'is-limited'}`}>
       <CheckCircle2 aria-hidden="true" />
       <div>
-        <strong>{isAiReview ? 'AI manager review' : 'Limited quick estimate'}</strong>
-        <span>{sourceQuality || 'Source detail unavailable'}</span>
+        <strong>{isAiReview ? 'AI manager review' : 'Quick estimate'} · {confidenceLevel || 'Limited'} confidence</strong>
+        <span>{propertyType || 'Vacation rental listing'} · {sourceQuality || 'Source detail unavailable'}</span>
       </div>
     </div>
   )
@@ -169,7 +178,12 @@ export default function PropertyScorePage({ navigate }) {
                   <small>out of 100</small>
                 </div>
 
-                <ReviewBadge mode={result.analysisMode} sourceQuality={result.sourceQuality} />
+                <ReviewBadge
+                  mode={result.analysisMode}
+                  sourceQuality={result.sourceQuality}
+                  confidenceLevel={result.confidenceLevel}
+                  propertyType={result.propertyType}
+                />
 
                 <div className="score-manager-note">
                   <span>Operator read</span>
@@ -188,11 +202,29 @@ export default function PropertyScorePage({ navigate }) {
                   </div>
                 )}
 
+                {result.missingData?.length > 0 && (
+                  <div className="score-visible-facts score-missing-data">
+                    <h3>What still needs a human look</h3>
+                    <ul>{result.missingData.map((item) => <li key={item}>{item}</li>)}</ul>
+                  </div>
+                )}
+
                 <div className="score-meter-grid">
                   {Object.entries(result.categories).map(([key, value]) => (
                     <ScoreMeter key={key} label={labels[key]} value={value} />
                   ))}
                 </div>
+
+                {result.stayDogReadiness && (
+                  <div className="score-standards">
+                    <h3>Measured against StayDog management standards</h3>
+                    <div className="score-meter-grid">
+                      {Object.entries(result.stayDogReadiness).map(([key, value]) => (
+                        <ScoreMeter key={key} label={readinessLabels[key] || key} value={value} />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="score-takeaways">
                   <h3>What I would look at first</h3>
