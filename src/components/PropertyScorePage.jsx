@@ -27,7 +27,7 @@ const labels = {
   amenityStrength: 'Amenity Strength',
   listingQuality: 'Listing Quality',
   photoQuality: 'Photo Quality',
-  operationalComplexity: 'Operational Complexity',
+  operationalComplexity: 'Operations Support Opportunity',
   revenueUpsideIndicators: 'Revenue Upside Indicators',
 }
 
@@ -37,17 +37,25 @@ const readinessLabels = {
   amenityDepth: 'Amenity Depth',
   operationsReadiness: 'Operations Readiness',
   ownerUpside: 'Owner Upside',
-  stayDogFit: 'StayDog Fit',
+  stayDogFit: 'StayDog Partnership Fit',
 }
 
 function ScoreMeter({ label, value }) {
+  const normalizedValue = (() => {
+    let numeric = Number(value) || 0
+    if (numeric > 0 && numeric <= 1) numeric *= 100
+    else if (numeric > 1 && numeric <= 5) numeric *= 20
+    else if (numeric > 5 && numeric <= 10) numeric *= 10
+    return Math.max(0, Math.min(100, Math.round(numeric)))
+  })()
+
   return (
     <div className="score-meter">
       <div>
         <span>{label}</span>
-        <strong>{value}/100</strong>
+        <strong>{normalizedValue}/100</strong>
       </div>
-      <i style={{ width: `${value}%` }} />
+      <i style={{ width: `${normalizedValue}%` }} />
     </div>
   )
 }
@@ -217,7 +225,7 @@ export default function PropertyScorePage({ navigate }) {
 
                 {result.stayDogReadiness && (
                   <div className="score-standards">
-                    <h3>Measured against StayDog management standards</h3>
+                    <h3>Where StayDog can help create more upside</h3>
                     <div className="score-meter-grid">
                       {Object.entries(result.stayDogReadiness).map(([key, value]) => (
                         <ScoreMeter key={key} label={readinessLabels[key] || key} value={value} />

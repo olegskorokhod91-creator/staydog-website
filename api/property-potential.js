@@ -531,6 +531,19 @@ function cleanScore(value) {
   return Math.max(0, Math.min(100, Math.round(Number(value) || 0)))
 }
 
+function cleanOpportunityScore(value, minimum = 58) {
+  let numeric = Number(value) || 0
+
+  // The model occasionally returns 1-5 or 1-10 rubric values even though the
+  // schema asks for 0-100. Normalize those so a strong 4/5 never renders as
+  // a discouraging 4/100.
+  if (numeric > 0 && numeric <= 1) numeric *= 100
+  else if (numeric > 1 && numeric <= 5) numeric *= 20
+  else if (numeric > 5 && numeric <= 10) numeric *= 10
+
+  return Math.max(minimum, Math.min(96, Math.round(numeric)))
+}
+
 function normalizeSnapshot(result, fallback) {
   const categories = {
     ...fallback.categories,
@@ -545,8 +558,8 @@ function normalizeSnapshot(result, fallback) {
     ...fallback,
     ...result,
     score: cleanScore(result.score || fallback.score),
-    categories: Object.fromEntries(Object.entries(categories).map(([key, value]) => [key, cleanScore(value)])),
-    stayDogReadiness: Object.fromEntries(Object.entries(stayDogReadiness).map(([key, value]) => [key, cleanScore(value)])),
+    categories: Object.fromEntries(Object.entries(categories).map(([key, value]) => [key, cleanOpportunityScore(value)])),
+    stayDogReadiness: Object.fromEntries(Object.entries(stayDogReadiness).map(([key, value]) => [key, cleanOpportunityScore(value, 62)])),
     analysisMode: result.analysisMode || 'AI manager review',
     sourceQuality: result.sourceQuality || fallback.sourceQuality,
     confidenceLevel: result.confidenceLevel || fallback.confidenceLevel,
@@ -679,7 +692,7 @@ async function createOpenAISnapshot(payload, fetched, fallback) {
         {
           role: 'system',
           content:
-            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. Set confidenceLevel to High only when full listing text, amenities, and enough facts are visible; Medium for useful metadata/partial detail; Limited when most details are unavailable. propertyType should identify the likely property type without overclaiming. missingData must list important unavailable inputs such as photos, reviews, amenities, pricing, bedroom/bath details, or seasonality. visibleFacts must list only facts directly visible in the provided context. stayDogReadiness should compare the property against StayDog management standards: listing readiness, guest promise, amenity depth, operations readiness, owner upside, and StayDog fit. recommendedImprovements must include 3-5 concrete, owner-friendly suggestions. stayDogFit must be 2-4 sentences explaining how StayDog can help operationally, not a generic one-liner. stayDogActionPlan must include 4 specific bullets: listing/positioning, pricing/revenue management, operations/guest care, and a final strategy-call item for more complex ideas.',
+            'You are a seasoned short-term rental owner, revenue-minded property manager, and hospitality operator. Analyze vacation rental listings like a practical expert: specific, warm, direct, and useful. Make every recommendation specific to the submitted property signals. Do not reuse generic advice when the property has different amenities, location, layout, or listing quality. Critical grounding rule: only mention amenities, location hooks, water access, hot tubs, pools, saunas, views, or photo quality when the provided context clearly supports them. If the context is limited marketplace metadata, say the review is limited and focus only on visible facts such as title, location, capacity, reviews, and stated trip use cases. Never invent amenities. Do not guarantee revenue or provide exact projected earnings. Use language like opportunity, may, could, and next step. Return only JSON matching the schema. All numeric category and stayDogReadiness values must be integers from 0 to 100, never 1-5, never 1-10, and never decimals. For a legitimate vacation rental, do not use very low scores unless the visible facts show a severe issue; these scores should express opportunity and fit, not punish the owner. Set analysisMode to "AI manager review" and sourceQuality to a short phrase describing what you analyzed. Set confidenceLevel to High only when full listing text, amenities, and enough facts are visible; Medium for useful metadata/partial detail; Limited when most details are unavailable. propertyType should identify the likely property type without overclaiming. missingData must list important unavailable inputs such as photos, reviews, amenities, pricing, bedroom/bath details, or seasonality. visibleFacts must list only facts directly visible in the provided context. stayDogReadiness should compare the property against StayDog management opportunity areas: listing readiness, guest promise, amenity depth, operations readiness, owner upside, and StayDog fit. recommendedImprovements must include 3-5 concrete, owner-friendly suggestions. stayDogFit must be 2-4 sentences explaining how StayDog can help operationally, not a generic one-liner. stayDogActionPlan must include 4 specific bullets: listing/positioning, pricing/revenue management, operations/guest care, and a final strategy-call item for more complex ideas.',
         },
         {
           role: 'user',
